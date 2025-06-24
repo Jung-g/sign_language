@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
+import 'package:sign_language/screen/user_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -52,6 +53,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       onPressed: () {
                         // 사용자 설정 연결
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => UserScreen()),
+                        );
                       },
                     ),
                   ),

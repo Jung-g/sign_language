@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sign_language/screen/dictionary_screen.dart';
 import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/screen/translate_screen.dart';
+import 'package:sign_language/screen/studycource_screen.dart';
+import 'package:sign_language/screen/bookmark_screen.dart';
 
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({super.key});
@@ -49,14 +51,20 @@ class BottomNavBar extends StatelessWidget {
           ),
           IconButton(
             onPressed: () {
-              print('학습코스선택');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => StudycourceScreen()),
+              );
               // 학습 코스 선택
             },
             icon: Icon(Icons.menu_book_rounded, size: 28),
           ),
           IconButton(
             onPressed: () {
-              print('단어 북마크');
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => BookmarkScreen()),
+              );
               // 단어 북마크
             },
             icon: Icon(Icons.bookmark_border, size: 28),
