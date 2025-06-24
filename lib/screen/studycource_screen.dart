@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
-import 'package:sign_language/widget/menuButton.dart';
+import 'package:sign_language/widget/menu_button.dart';
 
 class StudycourceScreen extends StatefulWidget {
   const StudycourceScreen({super.key});

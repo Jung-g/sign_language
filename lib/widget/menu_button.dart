@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 class MenuButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
+  final TextStyle? textStyle;
 
-  const MenuButton({super.key, required this.text, required this.onTap});
+  const MenuButton({
+    super.key,
+    required this.text,
+    required this.onTap,
+    this.textStyle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +30,13 @@ class MenuButton extends StatelessWidget {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style:
+                textStyle ??
+                const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
           ),
         ),
       ),

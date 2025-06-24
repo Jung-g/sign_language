@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
-import 'package:sign_language/widget/menuButton.dart';
+import 'package:sign_language/widget/menu_button.dart';
 
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
@@ -19,15 +19,23 @@ class _UserScreenState extends State<UserScreen> {
             Icon(Icons.person, color: Colors.purple, size: 120),
             SizedBox(height: 8),
             Text(
-              '홀리쉣',
+              '사용자 이름 받아넣기',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 50),
             MenuButton(text: '회원 정보 수정', onTap: () {}),
             MenuButton(text: '로그아웃', onTap: () {}),
 
             const Spacer(),
-            MenuButton(text: '회원 탈퇴', onTap: () {}),
+            MenuButton(
+              text: '회원 탈퇴',
+              textStyle: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Colors.red,
+              ),
+              onTap: () {},
+            ),
             BottomNavBar(),
           ],
         ),

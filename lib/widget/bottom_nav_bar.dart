@@ -20,7 +20,6 @@ class BottomNavBar extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () {
-              // print('사전');
               // 사전
               Navigator.push(
                 context,
@@ -51,21 +50,21 @@ class BottomNavBar extends StatelessWidget {
           ),
           IconButton(
             onPressed: () {
+              // 학습 코스 선택
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => StudycourceScreen()),
               );
-              // 학습 코스 선택
             },
             icon: Icon(Icons.menu_book_rounded, size: 28),
           ),
           IconButton(
             onPressed: () {
+              // 단어 북마크
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => BookmarkScreen()),
               );
-              // 단어 북마크
             },
             icon: Icon(Icons.bookmark_border, size: 28),
           ),
