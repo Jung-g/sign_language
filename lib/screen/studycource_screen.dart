@@ -6,10 +6,10 @@ class StudycourceScreen extends StatefulWidget {
   const StudycourceScreen({super.key});
 
   @override
-  State<StudycourceScreen> createState() => _StudycourceScreenState();
+  State<StudycourceScreen> createState() => StudycourceScreenState();
 }
 
-class _StudycourceScreenState extends State<StudycourceScreen> {
+class StudycourceScreenState extends State<StudycourceScreen> {
   final ScrollController scrollController = ScrollController();
   final List<String> sampleWordList = [
     '한글 자음/모음',

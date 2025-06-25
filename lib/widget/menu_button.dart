@@ -4,11 +4,13 @@ class MenuButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
   final TextStyle? textStyle;
+  final EdgeInsetsGeometry padding;
 
   const MenuButton({
     super.key,
     required this.text,
     required this.onTap,
+    this.padding = const EdgeInsets.symmetric(vertical: 16),
     this.textStyle,
   });
 
@@ -21,7 +23,7 @@ class MenuButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: padding,
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: Colors.black, width: 1.5),

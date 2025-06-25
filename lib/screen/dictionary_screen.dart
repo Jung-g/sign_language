@@ -178,11 +178,10 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                   selected = null;
                 }),
               ),
-
-            BottomNavBar(),
           ],
         ),
       ),
+      bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

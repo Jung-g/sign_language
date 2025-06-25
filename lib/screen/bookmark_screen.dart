@@ -12,9 +12,8 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(children: [const Spacer(), const BottomNavBar()]),
-      ),
+      body: SafeArea(child: Column(children: [])),
+      bottomNavigationBar: const BottomNavBar(),
     );
   }
 }
