@@ -43,55 +43,54 @@ class PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Textbox(controller: idcontrollor, hintText: '아이디를 입력해주세요'),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 100,
-                        child: MenuButton(
-                          text: '찾기',
-                          padding: EdgeInsets.symmetric(vertical: 8),
-                          onTap: () {
-                            setState(() {
-                              found = true;
-                            });
-                          },
-                        ),
-                      ),
-                      if (found) ...[
-                        Textbox(
-                          controller: pwcontrollor,
-                          hintText: '새 비밀번호 입력하세요',
-                          obscureText: true,
-                        ),
-                        Textbox(
-                          controller: passwordcontrollor,
-                          hintText: '비밀번호 확인',
-                          obscureText: true,
-                        ),
-                        SizedBox(
-                          width: 100,
-                          child: MenuButton(
-                            text: '돌아가기',
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LoginScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ],
+                  child: SizedBox(
+                    width: 100,
+                    child: MenuButton(
+                      text: '찾기',
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      onTap: () {
+                        setState(() {
+                          found = true;
+                        });
+                      },
+                    ),
                   ),
                 ),
+                if (found) ...[
+                  Textbox(
+                    controller: pwcontrollor,
+                    hintText: '새 비밀번호 입력하세요',
+                    obscureText: true,
+                  ),
+                  Textbox(
+                    controller: passwordcontrollor,
+                    hintText: '비밀번호 확인',
+                    obscureText: true,
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: SizedBox(
+                      width: 100,
+                      child: MenuButton(
+                        text: '돌아가기',
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LoginScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

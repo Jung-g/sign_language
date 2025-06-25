@@ -5,14 +5,18 @@ class TranslateScreen extends StatefulWidget {
   const TranslateScreen({super.key});
 
   @override
-  State<TranslateScreen> createState() => _TranslateScreenState();
+  State<TranslateScreen> createState() => TranslateScreenState();
 }
 
-class _TranslateScreenState extends State<TranslateScreen> {
+class TranslateScreenState extends State<TranslateScreen> {
   bool isSignToKorean = true; // true: 수어 > 한글 | false 한글 > 수어
   bool isCameraOn = false;
 
   final TextEditingController inputController = TextEditingController();
+
+  // 체크박스
+  final List<String> langs = ['한국어', 'English', '日本語', '中文'];
+  String selectedLang = '한국어';
 
   void toggleDirection() {
     setState(() {
@@ -29,7 +33,7 @@ class _TranslateScreenState extends State<TranslateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final inputLabel = isSignToKorean ? '수어 입력' : '한글 입력';
+    final inputLabel = isSignToKorean ? '수어 입력' : '$selectedLang 입력';
 
     return Scaffold(
       body: SafeArea(
@@ -38,22 +42,40 @@ class _TranslateScreenState extends State<TranslateScreen> {
             // 상단 전환 버튼
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    isSignToKorean ? '수어' : '한글',
-                    style: const TextStyle(fontSize: 30),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.sync_alt, size: 30),
-                    onPressed: toggleDirection,
-                  ),
-                  Text(
-                    isSignToKorean ? '한글' : '수어',
-                    style: const TextStyle(fontSize: 30),
-                  ),
-                ],
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      isSignToKorean ? '수어' : selectedLang,
+                      style: const TextStyle(fontSize: 30),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.sync_alt, size: 30),
+                      onPressed: toggleDirection,
+                    ),
+                    Text(
+                      isSignToKorean ? selectedLang : '수어',
+                      style: const TextStyle(fontSize: 30),
+                    ),
+                    SizedBox(
+                      width: 120,
+                      child: PopupMenuButton<String>(
+                        icon: const Icon(Icons.arrow_drop_down, size: 30),
+                        onSelected: (lang) =>
+                            setState(() => selectedLang = lang),
+                        itemBuilder: (_) {
+                          return langs.map((lang) {
+                            return PopupMenuItem(
+                              value: lang,
+                              child: Text(lang),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -98,7 +120,7 @@ class _TranslateScreenState extends State<TranslateScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
-                height: 200,
+                height: 420,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.black),
