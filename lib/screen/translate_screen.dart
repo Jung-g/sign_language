@@ -118,12 +118,10 @@ class _TranslateScreenState extends State<TranslateScreen> {
               },
               child: const Text('번역하기'),
             ),
-
-            const Spacer(),
-            BottomNavBar(),
           ],
         ),
       ),
+      bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sign_language/screen/login_screen.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/menu_button.dart';
 
@@ -6,10 +7,10 @@ class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
 
   @override
-  State<UserScreen> createState() => _UserScreenState();
+  State<UserScreen> createState() => UserScreenState();
 }
 
-class _UserScreenState extends State<UserScreen> {
+class UserScreenState extends State<UserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,7 +25,15 @@ class _UserScreenState extends State<UserScreen> {
             ),
             SizedBox(height: 50),
             MenuButton(text: '회원 정보 수정', onTap: () {}),
-            MenuButton(text: '로그아웃', onTap: () {}),
+            MenuButton(
+              text: '로그아웃',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                );
+              },
+            ),
 
             const Spacer(),
             MenuButton(
