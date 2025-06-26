@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/widget/menu_button.dart';
 import 'package:sign_language/widget/textbox.dart';
 import 'package:sign_language/screen/insertuser_screen.dart';
 import 'package:sign_language/screen/passwordrecovery_screen.dart';
+import 'package:sign_language/service/login_api.dart';
+import 'package:sign_language/service/token_storage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -59,13 +62,44 @@ class LoginScreenState extends State<LoginScreen> {
                         child: MenuButton(
                           text: '로그인',
                           padding: EdgeInsets.symmetric(vertical: 8),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HomeScreen(),
-                              ),
-                            );
+                          onTap: () async {
+                            final id = idcontroller.text.trim();
+                            final pw = passwordcontrollder.text.trim();
+                            final result = await LoginApi.login(id, pw);
+
+                            if (!mounted) return;
+
+                            if (result.success &&
+                                result.accessToken != null &&
+                                result.refreshToken != null &&
+                                result.expiresAt != null) {
+                              await TokenStorage.clearTokens();
+                              await TokenStorage.saveTokens(
+                                result.accessToken!,
+                                result.refreshToken!,
+                                result.expiresAt!,
+                              );
+                              if (!mounted) return;
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => HomeScreen(),
+                                ),
+                              );
+                            } else {
+                              if (!mounted) return;
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   SnackBar(
+                              //     content: Text(result.error ?? '로그인 실패'),
+                              //   ),
+                              // );
+                              Fluttertoast.showToast(
+                                msg: result.error ?? '로그인 실패',
+                                gravity: ToastGravity.BOTTOM,
+                                backgroundColor: Colors.red,
+                                textColor: Colors.white,
+                              );
+                            }
                           },
                         ),
                       ),
