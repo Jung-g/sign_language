@@ -70,6 +70,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   }
 
   void selectWord(String word) {
+    FocusScope.of(context).unfocus();
     setState(() {
       if (selected == word) {
         selected = null; // 같은 단어 다시 누르면 닫기
@@ -114,71 +115,81 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Column(
-          children: [
-            // 상단 헤더
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: searchController,
-                      decoration: InputDecoration(
-                        hintText: '단어 검색',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Column(
+            children: [
+              // 상단 헤더
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: '단어 검색',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                        ),
+                        onTap: () {
+                          setState(() {
+                            selected = null;
+                          });
+                        },
+                        onSubmitted: (_) => performSearch(),
                       ),
-                      onSubmitted: (_) => performSearch(),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: performSearch,
-                  ),
-                ],
-              ),
-            ),
-
-            // 사전 리스트 + 인덱스 바
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: ListView(
-                      controller: scrollController,
-                      children: sampleWordList.map((word) {
-                        return WordTile(
-                          key: wordKeys[word],
-                          word: word,
-                          isBookmarked: bookmarked.contains(word),
-                          onTap: () => selectWord(word),
-                          onBookmarkToggle: () => toggleBookmark(word),
-                        );
-                      }).toList(),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: performSearch,
                     ),
-                  ),
-                  IndexBar(initials: initials, onTap: scrollToFirstWordWith),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            // 단어 상세 정보
-            if (selected != null)
-              WordDetails(
-                word: selected!,
-                onClose: () => setState(() {
-                  selected = null;
-                }),
+              // 사전 리스트 + 인덱스 바
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: ListView(
+                        controller: scrollController,
+                        children: sampleWordList.map((word) {
+                          return WordTile(
+                            key: wordKeys[word],
+                            word: word,
+                            isBookmarked: bookmarked.contains(word),
+                            onTap: () => selectWord(word),
+                            onBookmarkToggle: () => toggleBookmark(word),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    IndexBar(initials: initials, onTap: scrollToFirstWordWith),
+                  ],
+                ),
               ),
-          ],
+
+              // 단어 상세 정보
+              if (selected != null)
+                WordDetails(
+                  word: selected!,
+                  onClose: () => setState(() {
+                    selected = null;
+                  }),
+                ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: const BottomNavBar(),
