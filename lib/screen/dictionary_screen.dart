@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:sign_language/sample_word.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/indexbar.dart';
 import 'package:sign_language/widget/word_details.dart';
 import 'package:sign_language/widget/word_tile.dart';
 
 class DictionaryScreen extends StatefulWidget {
-  const DictionaryScreen({super.key});
+  final List<String> words;
+  final Map<String, int> wordIdMap;
+  final String userID;
+
+  const DictionaryScreen({
+    super.key,
+    required this.words,
+    required this.wordIdMap,
+    required this.userID,
+  });
 
   @override
   State<DictionaryScreen> createState() => _DictionaryScreenState();
@@ -20,6 +28,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
   // 초성 리스트
   final List<String> initials = [
+    '#',
     'ㄱ',
     'ㄲ',
     'ㄴ',
@@ -42,29 +51,54 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   ];
 
   final TextEditingController searchController = TextEditingController();
-  List<String> filteredWordList = List.from(sampleWordList);
+  late List<String> filteredWordList = []; // = List.from(sampleWordList);
 
   @override
   void initState() {
     super.initState();
-    for (var word in sampleWordList) {
+    filteredWordList = List.from(widget.words);
+    for (var word in widget.words) {
       wordKeys[word] = GlobalKey();
     }
   }
 
   String getInitial(String text) {
-    final code = text.codeUnitAt(0) - 0xAC00;
-    if (code < 0 || code > 11171) return text[0];
-    final initial = initials[code ~/ 588];
-    return initials.contains(initial) ? initial : text[0];
+    final code = text.codeUnitAt(0);
+    if (code < 0xAC00 || code > 0xD7A3) {
+      return '#';
+    }
+
+    final initialCode = ((code - 0xAC00) ~/ 28 ~/ 21);
+    const initialsMap = [
+      'ㄱ',
+      'ㄲ',
+      'ㄴ',
+      'ㄷ',
+      'ㄸ',
+      'ㄹ',
+      'ㅁ',
+      'ㅂ',
+      'ㅃ',
+      'ㅅ',
+      'ㅆ',
+      'ㅇ',
+      'ㅈ',
+      'ㅉ',
+      'ㅊ',
+      'ㅋ',
+      'ㅌ',
+      'ㅍ',
+      'ㅎ',
+    ];
+    return initialsMap[initialCode];
   }
 
-  void toggleBookmark(String word) {
+  void toggleBookmark(String word, bool result) {
     setState(() {
-      if (bookmarked.contains(word)) {
-        bookmarked.remove(word);
-      } else {
+      if (result) {
         bookmarked.add(word);
+      } else {
+        bookmarked.remove(word);
       }
     });
   }
@@ -81,12 +115,21 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   }
 
   void scrollToFirstWordWith(String initial) {
-    final index = sampleWordList.indexWhere(
-      (word) => getInitial(word) == initial,
-    );
+    int index = -1;
+
+    if (initial == '#') {
+      index = filteredWordList.indexWhere(
+        (word) => RegExp(r'^[0-9]').hasMatch(word),
+      );
+    } else {
+      index = filteredWordList.indexWhere(
+        (word) => getInitial(word) == initial,
+      );
+    }
+
     if (index != -1) {
       scrollController.animateTo(
-        index * 56, // 워드 타일 사이즈 이용해서 이동
+        index * 56.0, // WordTile 높이 기준
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -97,7 +140,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     final query = searchController.text.trim();
     if (query.isEmpty) return;
 
-    final match = sampleWordList.firstWhere(
+    final match = filteredWordList.firstWhere(
       (word) => word.contains(query),
       orElse: () => '',
     );
@@ -105,7 +148,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     if (match.isNotEmpty) {
       setState(() {
         selected = match;
-        filteredWordList = sampleWordList
+        filteredWordList = filteredWordList
             .where((word) => word.contains(query))
             .toList();
       });
@@ -164,13 +207,16 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       flex: 5,
                       child: ListView(
                         controller: scrollController,
-                        children: sampleWordList.map((word) {
+                        children: filteredWordList.map((word) {
                           return WordTile(
                             key: wordKeys[word],
                             word: word,
+                            wid: widget.wordIdMap[word] ?? 0,
+                            userID: widget.userID,
                             isBookmarked: bookmarked.contains(word),
                             onTap: () => selectWord(word),
-                            onBookmarkToggle: () => toggleBookmark(word),
+                            onBookmarkToggle: (result) =>
+                                toggleBookmark(word, result),
                           );
                         }).toList(),
                       ),

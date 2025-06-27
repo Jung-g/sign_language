@@ -4,6 +4,8 @@ import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/screen/translate_screen.dart';
 import 'package:sign_language/screen/studycource_screen.dart';
 import 'package:sign_language/screen/bookmark_screen.dart';
+import 'package:sign_language/service/dictionary_api.dart';
+import 'package:sign_language/service/token_storage.dart';
 
 class BottomNavBar extends StatelessWidget {
   const BottomNavBar({super.key});
@@ -19,18 +21,30 @@ class BottomNavBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            onPressed: () {
-              // 사전
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => DictionaryScreen()),
-              );
+            // 사전
+            onPressed: () async {
+              try {
+                final wordData = await DictionaryApi.fetchWords();
+                final userId = await TokenStorage.getUserID();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DictionaryScreen(
+                      words: wordData.words,
+                      wordIdMap: wordData.wordIDMap,
+                      userID: userId!,
+                    ),
+                  ),
+                );
+              } catch (e) {
+                print('오류: $e');
+              }
             },
             icon: Icon(Icons.search, size: 28),
           ),
           IconButton(
+            // 번역
             onPressed: () {
-              // 번역
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => TranslateScreen()),
@@ -39,8 +53,8 @@ class BottomNavBar extends StatelessWidget {
             icon: Icon(Icons.g_translate, size: 28),
           ),
           IconButton(
+            // 홈 스크린
             onPressed: () {
-              // 홈 스크린
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => HomeScreen()),
@@ -49,8 +63,8 @@ class BottomNavBar extends StatelessWidget {
             icon: Icon(Icons.home, size: 50),
           ),
           IconButton(
+            // 학습 코스 선택
             onPressed: () {
-              // 학습 코스 선택
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => StudycourceScreen()),
@@ -59,8 +73,8 @@ class BottomNavBar extends StatelessWidget {
             icon: Icon(Icons.menu_book_rounded, size: 28),
           ),
           IconButton(
+            // 단어 북마크
             onPressed: () {
-              // 단어 북마크
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => BookmarkScreen()),

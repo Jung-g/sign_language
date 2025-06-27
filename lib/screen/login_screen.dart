@@ -78,6 +78,7 @@ class LoginScreenState extends State<LoginScreen> {
                                 result.accessToken!,
                                 result.refreshToken!,
                                 result.expiresAt!,
+                                userID: id,
                               );
                               if (!mounted) return;
                               Navigator.pushReplacement(
@@ -88,13 +89,9 @@ class LoginScreenState extends State<LoginScreen> {
                               );
                             } else {
                               if (!mounted) return;
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //   SnackBar(
-                              //     content: Text(result.error ?? '로그인 실패'),
-                              //   ),
-                              // );
                               Fluttertoast.showToast(
-                                msg: result.error ?? '로그인 실패',
+                                msg:
+                                    result.error ?? '가입하지 않은 회원이거나 비밀번호가 다릅니다.',
                                 gravity: ToastGravity.BOTTOM,
                                 backgroundColor: Colors.red,
                                 textColor: Colors.white,

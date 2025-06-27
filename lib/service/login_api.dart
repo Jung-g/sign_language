@@ -1,6 +1,8 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+const String baseUrl = 'http://10.101.52.226';
+
 class LoginResult {
   final bool success;
   final String? accessToken;
@@ -29,7 +31,7 @@ class LoginResult {
 
 class LoginApi {
   static Future<LoginResult> login(String id, String password) async {
-    final url = Uri.parse('http://10.101.84.218/user/login');
+    final url = Uri.parse('$baseUrl/user/login');
     try {
       final response = await http.post(
         url,
