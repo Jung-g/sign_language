@@ -24,9 +24,10 @@ class _StudyCalendarState extends State<StudyCalendar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('학습 달력')),
       body: Column(
         children: [
-          const SizedBox(height: 100),
+          const SizedBox(height: 80),
           buildStreakStats(learnedDate),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'token_storage.dart';
 
-const String baseUrl = 'http://10.101.52.226';
+const String baseUrl = 'http://10.101.92.18';
 
 class WordData {
   final List<String> words;
@@ -31,11 +31,13 @@ class DictionaryApi {
     final newAccessToken = response.headers['x-new-access-token'];
     if (newAccessToken != null) {
       final storedUserID = await TokenStorage.getUserID();
+      final storedNickName = await TokenStorage.getNickName();
       await TokenStorage.saveTokens(
         newAccessToken,
         refreshToken,
         '',
         userID: storedUserID!,
+        nickname: storedNickName!,
       );
     }
 

@@ -20,11 +20,13 @@ class WordTile extends StatelessWidget {
   });
 
   Future<void> handleBookmarkToggle() async {
-    final result = await BookmarkApi.toggleBookmark(userID: userID, wid: wid);
-
-    if (result != null) {
-      onBookmarkToggle(result);
+    bool success;
+    if (isBookmarked) {
+      success = await BookmarkApi.removeBookmark(wid: wid);
+    } else {
+      success = await BookmarkApi.addBookmark(wid: wid);
     }
+    onBookmarkToggle(success);
   }
 
   @override

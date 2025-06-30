@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/login_screen.dart';
 import 'package:sign_language/service/reset_password_api.dart';
 import 'package:sign_language/widget/menu_button.dart';
-import 'package:sign_language/widget/textbox.dart';
+import 'package:sign_language/widget/textBox.dart';
 
 class PasswordRecoveryScreen extends StatefulWidget {
   const PasswordRecoveryScreen({super.key});
@@ -47,7 +47,7 @@ class PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Textbox(controller: idcontrollor, hintText: '아이디를 입력해주세요'),
+                TextBox(controller: idcontrollor, hintText: '아이디를 입력해주세요'),
                 Align(
                   alignment: Alignment.centerRight,
                   child: SizedBox(
@@ -79,12 +79,12 @@ class PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                   ),
                 ),
                 if (found) ...[
-                  Textbox(
+                  TextBox(
                     controller: pwcontrollor,
                     hintText: '새 비밀번호 입력하세요',
                     obscureText: true,
                   ),
-                  Textbox(
+                  TextBox(
                     controller: passwordcontrollor,
                     hintText: '비밀번호 확인',
                     obscureText: true,

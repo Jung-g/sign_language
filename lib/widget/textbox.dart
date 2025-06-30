@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class Textbox extends StatelessWidget {
+class TextBox extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final bool obscureText;
 
-  const Textbox({
+  const TextBox({
     super.key,
     required this.controller,
     this.hintText = '',

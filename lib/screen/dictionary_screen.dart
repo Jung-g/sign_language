@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:sign_language/service/bookmark_api.dart';
+import 'package:sign_language/service/word_detail_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/indexbar.dart';
 import 'package:sign_language/widget/word_details.dart';
@@ -21,12 +24,19 @@ class DictionaryScreen extends StatefulWidget {
 }
 
 class _DictionaryScreenState extends State<DictionaryScreen> {
+  late List<String> filteredWordList;
   final Set<String> bookmarked = {};
   final Map<String, GlobalKey> wordKeys = {};
   final ScrollController scrollController = ScrollController();
-  String? selected;
+  final TextEditingController searchController = TextEditingController();
 
-  // 초성 리스트
+  String? selected;
+  int? selectedWid;
+  String? selectedPos;
+  String? selectedDefinition;
+  bool isLoadingDetail = false;
+
+  // 초성 인덱스
   final List<String> initials = [
     '#',
     'ㄱ',
@@ -50,26 +60,31 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     'ㅎ',
   ];
 
-  final TextEditingController searchController = TextEditingController();
-  late List<String> filteredWordList = []; // = List.from(sampleWordList);
-
   @override
   void initState() {
     super.initState();
     filteredWordList = List.from(widget.words);
-    for (var word in widget.words) {
-      wordKeys[word] = GlobalKey();
+    for (var w in widget.words) {
+      wordKeys[w] = GlobalKey();
+    }
+    loadInitialBookmarks();
+  }
+
+  Future<void> loadInitialBookmarks() async {
+    try {
+      final result = await BookmarkApi.fetchBookmarkedWords();
+      setState(() {
+        bookmarked.addAll(result.keys);
+      });
+    } catch (e) {
+      Fluttertoast.showToast(msg: '북마크 로드 실패');
     }
   }
 
-  String getInitial(String text) {
-    final code = text.codeUnitAt(0);
-    if (code < 0xAC00 || code > 0xD7A3) {
-      return '#';
-    }
-
-    final initialCode = ((code - 0xAC00) ~/ 28 ~/ 21);
-    const initialsMap = [
+  String getInitial(String word) {
+    final code = word.codeUnitAt(0);
+    if (code < 0xAC00 || code > 0xD7A3) return '#';
+    const init = [
       'ㄱ',
       'ㄲ',
       'ㄴ',
@@ -90,46 +105,73 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       'ㅍ',
       'ㅎ',
     ];
-    return initialsMap[initialCode];
+    return init[(code - 0xAC00) ~/ 588];
   }
 
-  void toggleBookmark(String word, bool result) {
+  void toggleBookmark(String word, bool success) {
+    if (!success) {
+      Fluttertoast.showToast(msg: '북마크 변경 실패');
+      return;
+    }
     setState(() {
-      if (result) {
-        bookmarked.add(word);
-      } else {
+      if (bookmarked.contains(word)) {
         bookmarked.remove(word);
+        Fluttertoast.showToast(msg: '$word 북마크 해제');
+      } else {
+        bookmarked.add(word);
+        Fluttertoast.showToast(msg: '$word 북마크 추가');
       }
     });
   }
 
-  void selectWord(String word) {
+  void selectWord(String word) async {
     FocusScope.of(context).unfocus();
+
+    final wid = widget.wordIdMap[word];
+    if (wid == null || wid == 0) return;
+
     setState(() {
-      if (selected == word) {
-        selected = null; // 같은 단어 다시 누르면 닫기
-      } else {
-        selected = word; // 다른 단어 누르면 해당 단어 보여줌
-      }
+      selected = word;
+      selectedWid = wid;
+      selectedPos = null;
+      selectedDefinition = null;
+      isLoadingDetail = true;
     });
+
+    try {
+      final data = await WordDetailApi.fetch(wid: wid);
+      setState(() {
+        selectedPos = data['pos'];
+        selectedDefinition = data['definition'];
+        isLoadingDetail = false;
+      });
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (_) => WordDetails(
+          word: selected!,
+          pos: selectedPos ?? '',
+          definition: selectedDefinition ?? '',
+          onClose: () => Navigator.of(context).pop(),
+        ),
+      );
+    } catch (e) {
+      Fluttertoast.showToast(msg: '단어 정보를 불러오는 데 실패했습니다.');
+      setState(() => isLoadingDetail = false);
+    }
   }
 
   void scrollToFirstWordWith(String initial) {
-    int index = -1;
-
-    if (initial == '#') {
-      index = filteredWordList.indexWhere(
-        (word) => RegExp(r'^[0-9]').hasMatch(word),
-      );
-    } else {
-      index = filteredWordList.indexWhere(
-        (word) => getInitial(word) == initial,
-      );
-    }
-
-    if (index != -1) {
+    final idx = initial == '#'
+        ? filteredWordList.indexWhere((w) => RegExp(r'^[0-9]').hasMatch(w))
+        : filteredWordList.indexWhere((w) => getInitial(w) == initial);
+    if (idx != -1) {
       scrollController.animateTo(
-        index * 56.0, // WordTile 높이 기준
+        idx * 56.0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -137,27 +179,24 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   }
 
   void performSearch() {
-    final query = searchController.text.trim();
-    if (query.isEmpty) return;
-
-    final match = filteredWordList.firstWhere(
-      (word) => word.contains(query),
-      orElse: () => '',
-    );
-
-    if (match.isNotEmpty) {
-      setState(() {
-        selected = match;
-        filteredWordList = filteredWordList
-            .where((word) => word.contains(query))
-            .toList();
-      });
-    }
+    final q = searchController.text.trim();
+    setState(() {
+      if (q.isEmpty) {
+        filteredWordList = List.from(widget.words);
+      } else {
+        filteredWordList = widget.words.where((w) => w.contains(q)).toList();
+      }
+      selected = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('단어 사전'),
+        automaticallyImplyLeading: false,
+      ),
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: GestureDetector(
@@ -165,7 +204,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
           onTap: () => FocusScope.of(context).unfocus(),
           child: Column(
             children: [
-              // 상단 헤더
+              // 검색창
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -182,11 +221,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                             horizontal: 16,
                           ),
                         ),
-                        onTap: () {
-                          setState(() {
-                            selected = null;
-                          });
-                        },
+                        onTap: () => setState(() => selected = null),
                         onSubmitted: (_) => performSearch(),
                       ),
                     ),
@@ -199,41 +234,51 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                 ),
               ),
 
-              // 사전 리스트 + 인덱스 바
+              // 단어 리스트 + 인덱스바
               Expanded(
-                child: Row(
+                child: Stack(
                   children: [
-                    Expanded(
-                      flex: 5,
-                      child: ListView(
-                        controller: scrollController,
-                        children: filteredWordList.map((word) {
-                          return WordTile(
-                            key: wordKeys[word],
-                            word: word,
-                            wid: widget.wordIdMap[word] ?? 0,
-                            userID: widget.userID,
-                            isBookmarked: bookmarked.contains(word),
-                            onTap: () => selectWord(word),
-                            onBookmarkToggle: (result) =>
-                                toggleBookmark(word, result),
-                          );
-                        }).toList(),
+                    ListView(
+                      controller: scrollController,
+                      children: filteredWordList.map((word) {
+                        return WordTile(
+                          key: wordKeys[word],
+                          word: word,
+                          wid: widget.wordIdMap[word] ?? 0,
+                          userID: widget.userID,
+                          isBookmarked: bookmarked.contains(word),
+                          onTap: () => selectWord(word),
+                          onBookmarkToggle: (result) =>
+                              toggleBookmark(word, result),
+                        );
+                      }).toList(),
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: selected != null ? 250 : 0,
+                      child: IndexBar(
+                        initials: initials,
+                        onTap: scrollToFirstWordWith,
                       ),
                     ),
-                    IndexBar(initials: initials, onTap: scrollToFirstWordWith),
                   ],
                 ),
               ),
 
-              // 단어 상세 정보
-              if (selected != null)
-                WordDetails(
-                  word: selected!,
-                  onClose: () => setState(() {
-                    selected = null;
-                  }),
-                ),
+              // 상세보기
+              // if (selected != null)
+              //   isLoadingDetail
+              //       ? const Padding(
+              //           padding: EdgeInsets.all(16),
+              //           child: CircularProgressIndicator(),
+              //         )
+              //       : WordDetails(
+              //           word: selected!,
+              //           pos: selectedPos ?? '',
+              //           definition: selectedDefinition ?? '',
+              //           onClose: () => setState(() => selected = null),
+              //         ),
             ],
           ),
         ),

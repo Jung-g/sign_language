@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:sign_language/screen/delete_user_screen.dart';
 import 'package:sign_language/screen/login_screen.dart';
+import 'package:sign_language/screen/update_user_screen.dart';
 import 'package:sign_language/service/logout_api.dart';
 import 'package:sign_language/service/token_storage.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
@@ -14,32 +16,53 @@ class UserScreen extends StatefulWidget {
 }
 
 class UserScreenState extends State<UserScreen> {
+  String nickname = '';
+
+  @override
+  void initState() {
+    super.initState();
+    getnickname();
+  }
+
+  void getnickname() async {
+    final loadnickname = await TokenStorage.getNickName();
+    setState(() {
+      nickname = loadnickname ?? 'noname';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('사용자 설정')),
       body: SafeArea(
         child: Column(
           children: [
             Icon(Icons.person, color: Colors.purple, size: 120),
             SizedBox(height: 8),
             Text(
-              '사용자 이름 받아넣기',
+              nickname,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
-            SizedBox(height: 50),
-            MenuButton(text: '회원 정보 수정', onTap: () {}),
+            SizedBox(height: 20),
+            MenuButton(
+              text: '회원 정보 수정',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UpdateUserScreen(),
+                  ),
+                );
+              },
+            ),
             MenuButton(
               text: '로그아웃',
               onTap: () async {
                 final refreshToken = await TokenStorage.getRefreshToken();
 
                 if (refreshToken == null || refreshToken.isEmpty) {
-                  Fluttertoast.showToast(
-                    msg: '토큰이 유효하지 않습니다.',
-                    gravity: ToastGravity.BOTTOM,
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                  );
+                  print('토큰 오류(유효하지 않은 토큰)');
                   return;
                 }
 
@@ -77,7 +100,14 @@ class UserScreenState extends State<UserScreen> {
                 fontWeight: FontWeight.w800,
                 color: Colors.red,
               ),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DeleteUserScreen(),
+                  ),
+                );
+              },
             ),
             BottomNavBar(),
           ],

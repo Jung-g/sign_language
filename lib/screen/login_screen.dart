@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/widget/menu_button.dart';
-import 'package:sign_language/widget/textbox.dart';
+import 'package:sign_language/widget/textBox.dart';
 import 'package:sign_language/screen/insertuser_screen.dart';
 import 'package:sign_language/screen/passwordrecovery_screen.dart';
 import 'package:sign_language/service/login_api.dart';
@@ -45,8 +45,8 @@ class LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: 40),
 
-                Textbox(controller: idcontroller, hintText: '아이디'),
-                Textbox(
+                TextBox(controller: idcontroller, hintText: '아이디'),
+                TextBox(
                   controller: passwordcontrollder,
                   hintText: '비밀번호',
                   obscureText: true,
@@ -78,7 +78,8 @@ class LoginScreenState extends State<LoginScreen> {
                                 result.accessToken!,
                                 result.refreshToken!,
                                 result.expiresAt!,
-                                userID: id,
+                                userID: result.userID!,
+                                nickname: result.nickname!,
                               );
                               if (!mounted) return;
                               Navigator.pushReplacement(

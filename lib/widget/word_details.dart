@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 
 class WordDetails extends StatelessWidget {
   final String word;
+  final String pos;
+  final String definition;
   final VoidCallback onClose;
 
-  const WordDetails({super.key, required this.word, required this.onClose});
+  const WordDetails({
+    super.key,
+    required this.word,
+    required this.pos,
+    required this.definition,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +42,11 @@ class WordDetails extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            const Text('[뜻 설명 자리] 서버 연동 예정'),
+            if (pos.isNotEmpty)
+              Text(
+                '[$pos] $definition',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
             const SizedBox(height: 8),
             Container(
               height: 120,

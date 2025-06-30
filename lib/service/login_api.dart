@@ -1,7 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-const String baseUrl = 'http://10.101.52.226';
+const String baseUrl = 'http://10.101.92.18';
 
 class LoginResult {
   final bool success;
@@ -9,6 +9,8 @@ class LoginResult {
   final String? refreshToken;
   final String? expiresAt;
   final String? error;
+  final String? nickname;
+  final String? userID;
 
   LoginResult({
     required this.success,
@@ -16,11 +18,15 @@ class LoginResult {
     this.refreshToken,
     this.expiresAt,
     this.error,
+    this.nickname,
+    this.userID,
   });
 
   factory LoginResult.fromJson(Map<String, dynamic> json) {
     return LoginResult(
       success: json['success'] ?? false,
+      userID: json['userID'],
+      nickname: json['nickname'],
       accessToken: json['access_token'],
       refreshToken: json['refresh_token'],
       expiresAt: json['expires_at'],

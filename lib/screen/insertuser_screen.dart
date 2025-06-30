@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/login_screen.dart';
 import 'package:sign_language/service/signup_api.dart';
 import 'package:sign_language/widget/menu_button.dart';
-import 'package:sign_language/widget/textbox.dart';
+import 'package:sign_language/widget/textBox.dart';
 
 class InsertuserScreen extends StatefulWidget {
   const InsertuserScreen({super.key});
@@ -77,7 +77,7 @@ class InsertuserScreenState extends State<InsertuserScreen> {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(
               children: [
-                Textbox(controller: usercontroller, hintText: '아이디을 입력하세요'),
+                TextBox(controller: usercontroller, hintText: '아이디을 입력하세요'),
                 Align(
                   alignment: Alignment.centerRight,
                   child: SizedBox(
@@ -91,13 +91,13 @@ class InsertuserScreenState extends State<InsertuserScreen> {
                 ),
 
                 if (isIDAvailable) ...{
-                  Textbox(controller: idcontroller, hintText: '닉네임를 입력하세요'),
-                  Textbox(
+                  TextBox(controller: idcontroller, hintText: '닉네임를 입력하세요'),
+                  TextBox(
                     controller: pwcontroller,
                     hintText: '비밀번호를 입력하세요',
                     obscureText: true,
                   ),
-                  Textbox(
+                  TextBox(
                     controller: passwordcontroller,
                     hintText: '비밀번호 확인',
                     obscureText: true,

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-const String baseUrl = 'http://10.101.52.226';
+const String baseUrl = 'http://10.101.92.18';
 
 Future<Map<String, dynamic>> checkID(String userID) async {
   final url = Uri.parse('$baseUrl/user/check_id?id=$userID');
@@ -28,7 +28,7 @@ Future<Map<String, dynamic>> registerUser({
   );
 
   if (response.statusCode == 200) {
-    return jsonDecode(response.body); // { "success": true/false }
+    return jsonDecode(response.body);
   } else {
     return {'success': false, 'message': '서버 오류: ${response.statusCode}'};
   }
