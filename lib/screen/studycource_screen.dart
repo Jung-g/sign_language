@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:sign_language/screen/home_screen.dart';
+import 'package:sign_language/service/study_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
+import 'package:sign_language/widget/choice_widget.dart';
 import 'package:sign_language/widget/menu_button.dart';
 
 class StudycourceScreen extends StatefulWidget {
@@ -10,67 +13,97 @@ class StudycourceScreen extends StatefulWidget {
 }
 
 class StudycourceScreenState extends State<StudycourceScreen> {
-  final ScrollController scrollController = ScrollController();
-  final List<String> sampleWordList = [
-    '한글 자음/모음',
-    '숫자',
-    '단어 1',
-    '단어 2',
-    '3',
-    '5',
-    '6',
-    '123',
-    '51231',
-    '23123',
-  ];
-
-  late final List<GlobalKey> itemKeys;
+  List<Map<String, dynamic>> studyList = [];
+  int? currentCourseIndex;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    itemKeys = List.generate(sampleWordList.length, (_) => GlobalKey());
+    fetchStudyList();
+  }
+
+  Future<void> fetchStudyList() async {
+    try {
+      final data = await StudyApi.fetchStudyCourses();
+      setState(() {
+        studyList = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('코스 목록 불러오기 실패: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                '학습코스 선택',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      '학습코스 선택',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: EdgeInsets.all(0),
+                      itemCount: studyList.length,
+                      itemBuilder: (context, index) {
+                        final course = studyList[index];
+                        final isSelected = currentCourseIndex == index;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            MenuButton(
+                              text: course['Study_Course'],
+                              onTap: () {
+                                setState(() {
+                                  currentCourseIndex = isSelected
+                                      ? null
+                                      : index;
+                                });
+                              },
+                            ),
+                            if (isSelected)
+                              ChoiceWidget(
+                                description: "${studyList[index]} 안내 코스입니다. ",
+                                onSelect: () {
+                                  // 여기에 학습 코스 뭐 설정했다는 코드가 필요함
+                                  setState(() {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => HomeScreen(),
+                                      ),
+                                    );
+                                  });
+                                },
+                                onClose: () => setState(() {
+                                  currentCourseIndex = -1;
+                                }),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                padding: EdgeInsets.only(
-                  top: 16,
-                  bottom:
-                      kBottomNavigationBarHeight +
-                      MediaQuery.of(context).padding.bottom +
-                      16,
-                ),
-                itemCount: sampleWordList.length,
-                itemBuilder: (context, index) {
-                  return MenuButton(
-                    text: sampleWordList[index],
-                    onTap: () {
-                      /*버튼 역할 코드 생성해야됨.*/
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
       ),
-      bottomNavigationBar: const BottomNavBar(),
+      bottomNavigationBar: BottomNavBar(),
     );
   }
 }

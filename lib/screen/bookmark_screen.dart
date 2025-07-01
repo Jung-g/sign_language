@@ -4,7 +4,6 @@ import 'package:sign_language/service/bookmark_api.dart';
 import 'package:sign_language/service/word_detail_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/indexbar.dart';
-import 'package:sign_language/widget/word_details.dart';
 import 'package:sign_language/widget/word_tile.dart';
 
 class BookmarkScreen extends StatefulWidget {
@@ -108,6 +107,92 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
         selectedDefinition = data['definition'];
         isLoadingDetail = false;
       });
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 12,
+                      offset: Offset(0, -4),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[400],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            word,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '[${selectedPos ?? ''}] ${selectedDefinition ?? ''}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(child: Text('수화 애니메이션 재생 영역')),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '수화 설명 출력 예정',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
     } catch (e) {
       Fluttertoast.showToast(msg: '단어 정보를 불러오는 데 실패했습니다.');
       setState(() => isLoadingDetail = false);
@@ -242,23 +327,6 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                 ],
               ),
             ),
-
-            // 상세 보기
-            if (selected != null)
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: isLoadingDetail
-                    ? const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: CircularProgressIndicator(),
-                      )
-                    : WordDetails(
-                        word: selected!,
-                        pos: selectedPos ?? '',
-                        definition: selectedDefinition ?? '',
-                        onClose: () => setState(() => selected = null),
-                      ),
-              ),
           ],
         ),
       ),
