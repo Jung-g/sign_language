@@ -5,6 +5,7 @@ import 'package:sign_language/service/word_detail_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/indexbar.dart';
 import 'package:sign_language/widget/word_tile.dart';
+import 'package:video_player/video_player.dart';
 
 class DictionaryScreen extends StatefulWidget {
   final List<String> words;
@@ -34,6 +35,9 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   String? selectedPos;
   String? selectedDefinition;
   bool isLoadingDetail = false;
+
+  VideoPlayerController? controller;
+  late Future<void> initVideoPlayer;
 
   // 초성 인덱스
   final List<String> initials = [
@@ -67,6 +71,12 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       wordKeys[w] = GlobalKey();
     }
     loadInitialBookmarks();
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
   }
 
   Future<void> loadInitialBookmarks() async {
@@ -137,8 +147,30 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       isLoadingDetail = true;
     });
 
+    if (controller != null && controller!.value.isInitialized) {
+      await controller!.pause();
+      await controller!.dispose();
+    }
+
     try {
       final data = await WordDetailApi.fetch(wid: wid);
+      selectedPos = data['pos'];
+      selectedDefinition = data['definition'];
+
+      controller =
+          VideoPlayerController.networkUrl(
+              Uri.parse(
+                'http://10.101.92.18/video/${Uri.encodeComponent(word)}.mp4',
+              ),
+            )
+            ..setLooping(true)
+            ..setPlaybackSpeed(1.0);
+
+      initVideoPlayer = controller!.initialize().then((_) {
+        setState(() {});
+        controller!.play();
+      });
+
       setState(() {
         selectedPos = data['pos'];
         selectedDefinition = data['definition'];
@@ -151,9 +183,9 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         backgroundColor: Colors.transparent,
         builder: (context) {
           return DraggableScrollableSheet(
-            initialChildSize: 0.7,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
+            initialChildSize: 0.5,
+            minChildSize: 0.4,
+            maxChildSize: 0.8,
             builder: (context, scrollController) {
               return Container(
                 decoration: BoxDecoration(
@@ -209,19 +241,68 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       '[${selectedPos ?? ''}] ${selectedDefinition ?? ''}',
                       style: const TextStyle(fontSize: 16),
                     ),
-                    const SizedBox(height: 24),
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Center(child: Text('수화 애니메이션 재생 영역')),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      '수화 설명 출력 예정',
-                      style: TextStyle(color: Colors.grey),
+                    const SizedBox(height: 12),
+                    FutureBuilder(
+                      future: initVideoPlayer,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done &&
+                            controller!.value.isInitialized) {
+                          return Column(
+                            children: [
+                              AspectRatio(
+                                aspectRatio: controller!.value.aspectRatio,
+                                child: VideoPlayer(controller!),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.replay_10_rounded),
+                                    onPressed: () {
+                                      final pos =
+                                          controller!.value.position -
+                                          const Duration(seconds: 10);
+                                      controller!.seekTo(
+                                        pos < Duration.zero
+                                            ? Duration.zero
+                                            : pos,
+                                      );
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      controller!.value.isPlaying
+                                          ? Icons.pause
+                                          : Icons.play_arrow_rounded,
+                                    ),
+                                    iconSize: 32,
+                                    onPressed: () {
+                                      controller!.value.isPlaying
+                                          ? controller!.pause()
+                                          : controller!.play();
+                                      setState(() {});
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.forward_10_rounded),
+                                    onPressed: () {
+                                      final pos =
+                                          controller!.value.position +
+                                          const Duration(seconds: 10);
+                                      controller!.seekTo(pos);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        } else {
+                          return const SizedBox(
+                            height: 150,
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -229,7 +310,10 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             },
           );
         },
-      );
+      ).whenComplete(() {
+        controller?.pause();
+        controller?.dispose();
+      });
     } catch (e) {
       Fluttertoast.showToast(msg: '단어 정보를 불러오는 데 실패했습니다.');
       setState(() => isLoadingDetail = false);
@@ -243,7 +327,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     if (idx != -1) {
       scrollController.animateTo(
         idx * 56.0,
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 100),
         curve: Curves.easeInOut,
       );
     }
@@ -263,6 +347,9 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('단어 사전'),
@@ -271,7 +358,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
+          behavior: HitTestBehavior.deferToChild,
           onTap: () => FocusScope.of(context).unfocus(),
           child: Column(
             children: [
@@ -311,6 +398,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                   children: [
                     ListView(
                       controller: scrollController,
+                      padding: EdgeInsets.only(bottom: bottomInset, right: 24),
                       children: filteredWordList.map((word) {
                         return WordTile(
                           key: wordKeys[word],
@@ -328,10 +416,12 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       right: 0,
                       top: 0,
                       bottom: selected != null ? 250 : 0,
-                      child: IndexBar(
-                        initials: initials,
-                        onTap: scrollToFirstWordWith,
-                      ),
+                      child: isKeyboardVisible
+                          ? const SizedBox.shrink()
+                          : IndexBar(
+                              initials: initials,
+                              onTap: scrollToFirstWordWith,
+                            ),
                     ),
                   ],
                 ),
