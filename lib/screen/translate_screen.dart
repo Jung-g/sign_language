@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -18,7 +18,7 @@ class TranslateScreen extends StatefulWidget {
 class TranslateScreenState extends State<TranslateScreen> {
   bool isSignToKorean = true; // true: 수어 -> 한글 | false 한글 -> 수어
   bool isCameraOn = false;
-  int countdown = 0;
+  // int countdown = 0;
   XFile? capturedVideo;
 
   CameraController? cameraController;
@@ -36,6 +36,7 @@ class TranslateScreenState extends State<TranslateScreen> {
 
   VideoPlayerController? controller;
   Future<void>? initVideoPlayer;
+  Timer? recordingTimer;
 
   void toggleDirection() {
     setState(() {
@@ -81,6 +82,10 @@ class TranslateScreenState extends State<TranslateScreen> {
       await cameraController!.initialize();
       await cameraController!.prepareForVideoRecording();
       await cameraController!.startVideoRecording();
+
+      Future.delayed(Duration(seconds: 5)).then((_) {
+        stopCamera();
+      });
     } catch (e) {
       Fluttertoast.showToast(msg: "카메라 시작 실패: $e");
       return;
@@ -290,20 +295,20 @@ class TranslateScreenState extends State<TranslateScreen> {
                           ),
 
                         // 카운트다운
-                        if (isSignToKorean && isCameraOn && countdown > 0)
-                          Positioned.fill(
-                            child: Container(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '$countdown',
-                                style: TextStyle(
-                                  fontSize: 60,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
+                        // if (isSignToKorean && isCameraOn && countdown > 0)
+                        //   Positioned.fill(
+                        //     child: Container(
+                        //       color: Colors.black.withValues(alpha: 0.5),
+                        //       alignment: Alignment.center,
+                        //       child: Text(
+                        //         '$countdown',
+                        //         style: TextStyle(
+                        //           fontSize: 60,
+                        //           color: Colors.white,
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ),
                       ],
                     ),
                   ),
@@ -327,19 +332,19 @@ class TranslateScreenState extends State<TranslateScreen> {
                               if (isSignToKorean && resultKorean != null) ...[
                                 Text(
                                   '한글: $resultKorean',
-                                  style: TextStyle(fontSize: 28),
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 Text(
                                   '영어: $resultEnglish',
-                                  style: TextStyle(fontSize: 28),
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 Text(
                                   '일본어: $resultJapanese',
-                                  style: TextStyle(fontSize: 28),
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 Text(
                                   '중국어: $resultChinese',
-                                  style: TextStyle(fontSize: 28),
+                                  style: TextStyle(fontSize: 16),
                                 ),
                                 const SizedBox(height: 12),
                               ],
