@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/camera_widget.dart';

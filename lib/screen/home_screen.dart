@@ -1,21 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:sign_language/dummy_data.dart';
 import 'package:sign_language/screen/study_calendar.dart';
 import 'package:sign_language/screen/user_screen.dart';
+import 'package:sign_language/service/calendar_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  static DateTime _normalize(DateTime d) => DateTime(d.year, d.month, d.day);
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
-  bool shouldShowFireIcon() {
-    final today = _normalize(DateTime.now());
+class _HomeScreenState extends State<HomeScreen> {
+  Set<DateTime> learnedDates = {};
+  bool isLoading = true;
+  static DateTime normalize(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  @override
+  void initState() {
+    super.initState();
+    loadLearnedDates();
+  }
+
+  Future<void> loadLearnedDates() async {
+    try {
+      final result = await CalendarApi.fetchLearnedDates();
+      setState(() {
+        learnedDates = result.map(normalize).toSet();
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('홈 학습 날짜 로딩 실패: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  bool get isFireActive {
+    final today = normalize(DateTime.now());
     final yesterday = today.subtract(const Duration(days: 1));
-    final normalizedDates = rawDates.map(_normalize).toSet();
-
-    return normalizedDates.contains(today) ||
-        normalizedDates.contains(yesterday);
+    return learnedDates.contains(today) || learnedDates.contains(yesterday);
   }
 
   @override
@@ -35,7 +60,7 @@ class HomeScreen extends StatelessWidget {
                   child: IconButton(
                     icon: Icon(
                       Icons.local_fire_department,
-                      color: shouldShowFireIcon()
+                      color: isFireActive
                           ? Colors.pinkAccent
                           : Colors.black.withAlpha(100),
                       size: 54,

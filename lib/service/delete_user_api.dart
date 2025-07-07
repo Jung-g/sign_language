@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
 const String baseUrl = 'http://10.101.132.200';
@@ -31,7 +32,7 @@ class DeleteUserApi {
         return false;
       }
     } catch (e) {
-      print('회원탈퇴 오류: $e');
+      debugPrint('회원탈퇴 오류: $e');
       return false;
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/service/study_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
@@ -31,7 +32,7 @@ class StudycourceScreenState extends State<StudycourceScreen> {
         isLoading = false;
       });
     } catch (e) {
-      print('코스 목록 불러오기 실패: $e');
+      Fluttertoast.showToast(msg: "학습 코스 목록 불러오기 실패");
       setState(() {
         isLoading = false;
       });
@@ -79,7 +80,7 @@ class StudycourceScreenState extends State<StudycourceScreen> {
                             ),
                             if (isSelected)
                               ChoiceWidget(
-                                description: "${studyList[index]} 안내 코스입니다. ",
+                                description: "${course['Study_Course']} 코스입니다.",
                                 onSelect: () {
                                   // 여기에 학습 코스 뭐 설정했다는 코드가 필요함
                                   setState(() {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/dictionary_screen.dart';
 import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/screen/translate_screen.dart';
@@ -37,7 +38,8 @@ class BottomNavBar extends StatelessWidget {
                   ),
                 );
               } catch (e) {
-                print('오류: $e');
+                // print('오류: $e');
+                Fluttertoast.showToast(msg: '사전 로딩 오류');
               }
             },
             icon: Icon(Icons.search, size: 28),

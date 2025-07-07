@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:sign_language/service/token_storage.dart';
@@ -46,11 +47,12 @@ class TranslateApi {
           'japanese': data['japanese'],
         };
       } else {
-        print("번역 실패: ${response.statusCode} ${response.body}");
+        // print("번역 실패: ${response.statusCode} ${response.body}");
+        Fluttertoast.showToast(msg: '번역을 실패했습니다.');
         return null;
       }
     } catch (e) {
-      print("번역 요청 중 오류 발생: $e");
+      Fluttertoast.showToast(msg: '번역 요청을 실패했습니다.');
       return null;
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:sign_language/dummy_data.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/model/calendar_model.dart';
+import 'package:sign_language/service/calendar_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -12,14 +13,26 @@ class StudyCalendar extends StatefulWidget {
 }
 
 class _StudyCalendarState extends State<StudyCalendar> {
-  final DateTime today = _normalize(DateTime.now());
+  final DateTime today = normalize(DateTime.now());
   DateTime focusedDay = DateTime.now();
+  Set<DateTime> learnedDate = {}; //rawDates.map(normalize).toSet();
+  static DateTime normalize(DateTime d) => DateTime(d.year, d.month, d.day);
+  bool _isLearned(DateTime day) => learnedDate.contains(normalize(day));
 
-  final Set<DateTime> learnedDate = rawDates.map(_normalize).toSet();
+  @override
+  void initState() {
+    super.initState();
 
-  static DateTime _normalize(DateTime d) => DateTime(d.year, d.month, d.day);
-
-  bool _isLearned(DateTime day) => learnedDate.contains(_normalize(day));
+    CalendarApi.fetchLearnedDates()
+        .then((dates) {
+          setState(() {
+            learnedDate = dates.map(normalize).toSet();
+          });
+        })
+        .catchError((e) {
+          Fluttertoast.showToast(msg: '학습 날짜 불러오기 실패했습니다.');
+        });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +40,7 @@ class _StudyCalendarState extends State<StudyCalendar> {
       appBar: AppBar(title: const Text('학습 달력')),
       body: Column(
         children: [
-          const SizedBox(height: 80),
+          const SizedBox(height: 60),
           buildStreakStats(learnedDate),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -69,12 +82,15 @@ class _StudyCalendarState extends State<StudyCalendar> {
             ),
           ),
           TableCalendar(
-            firstDay: DateTime(2020, 1, 1),
-            lastDay: DateTime(2030, 12, 31),
+            locale: 'ko_KR',
+            firstDay: DateTime(2025, 1, 1),
+            lastDay: DateTime(9999, 12, 31),
             focusedDay: focusedDay,
             onPageChanged: (day) => setState(() => focusedDay = day),
             headerVisible: false,
             calendarFormat: CalendarFormat.month,
+            rowHeight: 48,
+            daysOfWeekHeight: 24,
             selectedDayPredicate: _isLearned,
             calendarStyle: CalendarStyle(
               defaultTextStyle: const TextStyle(color: Colors.black),
@@ -88,10 +104,11 @@ class _StudyCalendarState extends State<StudyCalendar> {
                 shape: BoxShape.circle,
               ),
               markerDecoration: const BoxDecoration(color: Colors.transparent),
+              cellMargin: const EdgeInsets.symmetric(vertical: 4),
             ),
             calendarBuilders: CalendarBuilders(
               defaultBuilder: (context, day, _) {
-                final isToday = _normalize(day) == today;
+                final isToday = normalize(day) == today;
                 final isLearned = _isLearned(day);
 
                 if (!isToday && !isLearned) return null;

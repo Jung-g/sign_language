@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/screen/login_screen.dart';
 import 'package:sign_language/service/auto_login_api.dart';
@@ -28,6 +29,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '수어 학습 앱',
       debugShowCheckedModeBanner: false,
+      locale: const Locale('ko', 'KR'),
+      supportedLocales: const [Locale('ko', 'KR'), Locale('en', 'US')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: isLoggedIn ? HomeScreen() : LoginScreen(),
     );
   }

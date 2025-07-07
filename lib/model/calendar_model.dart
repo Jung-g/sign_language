@@ -58,9 +58,9 @@ Widget buildStreakStats(Set<DateTime> learnedDates) {
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        streakInfo("기록", "$displayLongest", "불꽃 연속일"),
+        streakInfo("최고 기록", "$displayLongest", "불꽃 연속일"),
         Icon(Icons.local_fire_department, color: iconColor, size: 72),
-        streakInfo("기록", "$displayCurrent", "연속 주"),
+        streakInfo("기록", "$displayCurrent", "연속 학습일"),
       ],
     ),
   );
