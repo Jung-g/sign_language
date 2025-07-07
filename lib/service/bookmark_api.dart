@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:sign_language/service/token_storage.dart';
 
-const String baseUrl = 'http://10.101.92.18';
+const String baseUrl = 'http://10.101.132.200';
 
 class BookmarkApi {
   // 북마크 추가

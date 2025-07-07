@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-const String baseUrl = 'http://10.101.92.18';
+const String baseUrl = 'http://10.101.132.200';
 
 class PasswordResetApi {
   // userID 존재 여부 확인
