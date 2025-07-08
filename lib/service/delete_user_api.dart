@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
+import 'package:sign_language/service/token_storage.dart';
 
 const String baseUrl = 'http://10.101.132.200';
 
@@ -22,6 +23,11 @@ class DeleteUserApi {
         },
         body: jsonEncode({'password': password}),
       );
+
+      final newAccessToken = response.headers['x-new-access-token'];
+      if (newAccessToken != null && newAccessToken.isNotEmpty) {
+        await TokenStorage.setAccessToken(newAccessToken);
+      }
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

@@ -68,7 +68,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
 
   Future<void> loadBookmarks() async {
     try {
-      final result = await BookmarkApi.fetchBookmarkedWords();
+      final result = await BookmarkApi.loadBookmark();
       setState(() {
         wordIdMap = result;
         filteredWords = result.keys.toList()..sort();

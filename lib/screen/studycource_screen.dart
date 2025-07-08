@@ -26,7 +26,7 @@ class StudycourceScreenState extends State<StudycourceScreen> {
 
   Future<void> fetchStudyList() async {
     try {
-      final data = await StudyApi.fetchStudyCourses();
+      final data = await StudyApi.StudyCourses();
       setState(() {
         studyList = data;
         isLoading = false;

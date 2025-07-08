@@ -65,7 +65,7 @@ class BookmarkApi {
   }
 
   // 북마크 보기
-  static Future<Map<String, int>> fetchBookmarkedWords() async {
+  static Future<Map<String, int>> loadBookmark() async {
     final accessToken = await TokenStorage.getAccessToken();
     final refreshToken = await TokenStorage.getRefreshToken();
 

@@ -81,7 +81,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
   Future<void> loadInitialBookmarks() async {
     try {
-      final result = await BookmarkApi.fetchBookmarkedWords();
+      final result = await BookmarkApi.loadBookmark();
       setState(() {
         bookmarked.addAll(result.keys);
       });
