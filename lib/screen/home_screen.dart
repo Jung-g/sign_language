@@ -1,116 +1,288 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_language/model/mistak.dart';
 import 'package:sign_language/screen/study_calendar.dart';
+import 'package:sign_language/screen/study_screen.dart';
 import 'package:sign_language/screen/user_screen.dart';
 import 'package:sign_language/service/calendar_api.dart';
+import 'package:sign_language/service/study_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
+import 'package:sign_language/widget/new_widget/coursestepcard_widget.dart';
+import 'package:sign_language/widget/new_widget/recentmistakescard_widget.dart';
+import 'package:sign_language/widget/new_widget/stetscard_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  static DateTime normalize(DateTime d) => DateTime(d.year, d.month, d.day);
+
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   Set<DateTime> learnedDates = {};
+  int learnedWordsCount = 0;
+  int streakDays = 0;
   bool isLoading = true;
+  String? selectedCourse;
+  int currentDay = 1;
+  int totalDays = 5;
+  double overallPercent = 0.0;
+  List<String> allCourses = [];
+  List<Map<String, dynamic>> words = [];
+
+  double get percent => currentDay / totalDays;
+
   static DateTime normalize(DateTime d) => DateTime(d.year, d.month, d.day);
 
   @override
   void initState() {
     super.initState();
-    loadLearnedDates();
+    restoreSavedCourse();
+    loadStudyStats();
+  }
+
+  Future<void> loadStudyStats() async {
+    try {
+      final result = await StudyApi.getStudyStats();
+      final rate = await StudyApi.getCompletionRate();
+
+      setState(() {
+        learnedDates = result.learnedDates.toSet();
+        streakDays = result.streakDays;
+        learnedWordsCount = result.learnedWordsCount;
+        overallPercent = rate;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('학습 통계 로딩 실패: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  bool get isFireActive {
+    final today = HomeScreen.normalize(DateTime.now());
+    final yesterday = today.subtract(const Duration(days: 1));
+    return learnedDates.contains(today) || learnedDates.contains(yesterday);
+  }
+
+  Future<void> restoreSavedCourse() async {
+    final prefs = await SharedPreferences.getInstance();
+    final course = prefs.getString('selectedCourse');
+    final wordStr = prefs.getString('words');
+    final courseList = prefs.getStringList('allCourses');
+    final savedDay = prefs.getInt('currentDay') ?? 1;
+    final savedTotal = prefs.getInt('totalDays') ?? 1;
+
+    if (course != null && wordStr != null && courseList != null) {
+      setState(() {
+        selectedCourse = course;
+        words = List<Map<String, dynamic>>.from(jsonDecode(wordStr));
+        currentDay = savedDay;
+        totalDays = savedTotal;
+        allCourses = courseList;
+      });
+    }
   }
 
   Future<void> loadLearnedDates() async {
     try {
       final result = await CalendarApi.fetchLearnedDates();
       setState(() {
-        learnedDates = result.map(normalize).toSet();
-        isLoading = false;
+        learnedDates = result.learnedDates;
+        streakDays = result.streakDays;
       });
     } catch (e) {
-      debugPrint('홈 학습 날짜 로딩 실패: $e');
-      setState(() {
-        isLoading = false;
-      });
+      debugPrint('학습 날짜 불러오기 실패: $e');
     }
   }
 
-  bool get isFireActive {
-    final today = normalize(DateTime.now());
-    final yesterday = today.subtract(const Duration(days: 1));
-    return learnedDates.contains(today) || learnedDates.contains(yesterday);
+  final recentMistakes = [
+    Mistake(
+      prompt: '이것은 무엇인가요?',
+      assetPath: 'assets/signs/4.gif',
+      correct: '4',
+    ),
+  ];
+
+  void resetProgress() {
+    setState(() {
+      currentDay = 1;
+    });
+  }
+
+  int getTotalSteps(List<dynamic> words) {
+    return words.map((e) => e['step']).toSet().length;
   }
 
   @override
   Widget build(BuildContext context) {
+    final horizontalPadding = MediaQuery.of(context).size.width * 0.02;
+    final mq = MediaQuery.of(context);
+    final boxHeight = mq.size.height * 0.25;
+
     return Scaffold(
-      body: Column(
-        children: [
-          const SizedBox(height: 40),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Stack(
-              alignment: Alignment.center,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                // 학습 달력 아이콘
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.local_fire_department,
-                      color: isFireActive
-                          ? Colors.pinkAccent
-                          : Colors.black.withAlpha(100),
-                      size: 54,
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const StudyCalendar(),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.local_fire_department,
+                            color: isFireActive
+                                ? Colors.pinkAccent
+                                : Colors.black.withAlpha(100),
+                            size: 54,
+                          ),
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const StudyCalendar(),
+                              ),
+                            );
+                            await loadLearnedDates();
+                          },
                         ),
-                      );
-                    },
+                      ),
+                      Center(
+                        child: Text(
+                          selectedCourse != null
+                              ? "$selectedCourse"
+                              : '학습 코스를 선택해 주세요',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: CircleAvatar(
+                          radius: 24,
+                          backgroundColor: Colors.purple.shade100,
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.person,
+                              color: Colors.purple,
+                              size: 36,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => UserScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(height: 10),
+                CoursestepcardWidget(
+                  boxHeight: boxHeight,
+                  horizontalPadding: horizontalPadding,
+                  selectedCourse: selectedCourse,
+                  currentDay: currentDay,
+                  totalDays: totalDays,
+                  onSelectCourse: (detail) async {
+                    final prefs = await SharedPreferences.getInstance();
 
-                const Center(
-                  child: Text('학습 코스를 선택해 주세요', style: TextStyle(fontSize: 16)),
+                    await prefs.setString('selectedCourse', detail['course']);
+                    await prefs.setInt('sid', detail['sid']);
+                    await prefs.setString('words', jsonEncode(detail['words']));
+                    await prefs.setInt('currentDay', 1);
+                    await prefs.setInt(
+                      'totalDays',
+                      getTotalSteps(detail['words']),
+                    );
+
+                    setState(() {
+                      selectedCourse = detail['course'];
+                      currentDay = 1;
+                      totalDays = getTotalSteps(detail['words']);
+                    });
+                  },
+
+                  onStartStudy: (day) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            StudyScreen(course: selectedCourse!, day: day),
+                      ),
+                    );
+                  },
                 ),
 
-                // 사용자 설정 아이콘
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.purple.shade100,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.person,
-                        color: Colors.purple,
-                        size: 36,
+                const SizedBox(height: 10),
+                Flexible(
+                  flex: 1,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.purple[50],
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => UserScreen()),
-                        );
-                      },
+                      child: selectedCourse != null
+                          ? Column(
+                              children: [
+                                StetscardWidget(
+                                  learnedWords: learnedWordsCount,
+                                  streakDays: streakDays,
+                                  overallPercent: overallPercent,
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                Flexible(
+                  flex: 2,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.orange[50],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: selectedCourse != null
+                          ? RecentMistakesCard(mistakes: recentMistakes)
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
               ],
             ),
-          ),
-
-          const Spacer(),
-          const BottomNavBar(),
-        ],
-      ),
+      bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

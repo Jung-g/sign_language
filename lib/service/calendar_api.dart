@@ -5,7 +5,10 @@ import 'package:sign_language/service/token_storage.dart';
 const String baseUrl = 'http://10.101.132.200';
 
 class CalendarApi {
-  static Future<Set<DateTime>> fetchLearnedDates() async {
+  static Future<
+    ({Set<DateTime> learnedDates, int streakDays, int bestStreakDays})
+  >
+  fetchLearnedDates() async {
     final accessToken = await TokenStorage.getAccessToken();
     final refreshToken = await TokenStorage.getRefreshToken();
 
@@ -25,8 +28,10 @@ class CalendarApi {
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
       final List<dynamic> dateList = jsonData['records'];
+      final int streakDays = jsonData['streak_days'];
+      final int bestStreakDays = jsonData['best_streak_days'];
 
-      return dateList.map<DateTime>((dateStr) {
+      final dates = dateList.map<DateTime>((dateStr) {
         final parts = dateStr.split('-');
         return DateTime(
           int.parse(parts[0]),
@@ -34,6 +39,12 @@ class CalendarApi {
           int.parse(parts[2]),
         );
       }).toSet();
+
+      return (
+        learnedDates: dates,
+        streakDays: streakDays,
+        bestStreakDays: bestStreakDays,
+      );
     } else {
       throw Exception('학습 날짜 불러오기 실패: ${response.statusCode}');
     }

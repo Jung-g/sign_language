@@ -34,15 +34,22 @@ class StudyApi {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> StudyCoursesData() async {
+  // 선택한 학습 코스 데이터 가져오기
+  static Future<Map<String, dynamic>> fetchCourseDetail(
+    String courseName,
+  ) async {
     final accessToken = await TokenStorage.getAccessToken();
     final refreshToken = await TokenStorage.getRefreshToken();
 
     if (accessToken == null) throw Exception("accessToken 없음");
     if (refreshToken == null) throw Exception("refreshToken 없음");
 
+    final url = Uri.parse(
+      '$baseUrl/study/course?course_name=${Uri.encodeComponent(courseName)}',
+    );
+
     final response = await http.get(
-      Uri.parse('$baseUrl/study/course'),
+      url,
       headers: {
         'Authorization': 'Bearer $accessToken',
         'X-Refresh-Token': refreshToken,
@@ -55,10 +62,86 @@ class StudyApi {
     }
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data);
+      final data = jsonDecode(response.body);
+      return Map<String, dynamic>.from(data);
     } else {
-      throw Exception('세부 데이터 불러오기 실패: ${response.statusCode}');
+      throw Exception('학습 코스 세부정보 요청 실패: ${response.statusCode}');
+    }
+  }
+
+  // 학습 통계 가져오기
+  static Future<
+    ({List<DateTime> learnedDates, int streakDays, int learnedWordsCount})
+  >
+  getStudyStats() async {
+    final accessToken = await TokenStorage.getAccessToken();
+    final refreshToken = await TokenStorage.getRefreshToken();
+
+    if (accessToken == null) throw Exception("accessToken 없음");
+    if (refreshToken == null) throw Exception("refreshToken 없음");
+
+    final url = Uri.parse('$baseUrl/study/stats');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'X-Refresh-Token': refreshToken,
+      },
+    );
+
+    final newAccessToken = response.headers['x-new-access-token'];
+    if (newAccessToken != null && newAccessToken.isNotEmpty) {
+      await TokenStorage.setAccessToken(newAccessToken);
+    }
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final dates = (data['learned_dates'] as List)
+          .map((e) => DateTime.parse(e))
+          .toList();
+      final streak = data['streak_days'] as int;
+      final count = data['learned_words_count'] as int;
+
+      return (
+        learnedDates: dates,
+        streakDays: streak,
+        learnedWordsCount: count,
+      );
+    } else {
+      throw Exception('학습 통계 조회 실패: ${response.statusCode}');
+    }
+  }
+
+  // 전체 코스 기준 현재 학습 완료 퍼센트 가져오기
+  static Future<double> getCompletionRate() async {
+    final accessToken = await TokenStorage.getAccessToken();
+    final refreshToken = await TokenStorage.getRefreshToken();
+
+    if (accessToken == null) throw Exception("accessToken 없음");
+    if (refreshToken == null) throw Exception("refreshToken 없음");
+
+    final url = Uri.parse('$baseUrl/study/completion_rate');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'X-Refresh-Token': refreshToken,
+      },
+    );
+
+    final newAccessToken = response.headers['x-new-access-token'];
+    if (newAccessToken != null && newAccessToken.isNotEmpty) {
+      await TokenStorage.setAccessToken(newAccessToken);
+    }
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final percent = data['completion_percent'];
+      return percent.toDouble();
+    } else {
+      throw Exception('학습 완료율 조회 실패: ${response.statusCode}');
     }
   }
 }

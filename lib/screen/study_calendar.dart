@@ -15,18 +15,26 @@ class StudyCalendar extends StatefulWidget {
 class _StudyCalendarState extends State<StudyCalendar> {
   final DateTime today = normalize(DateTime.now());
   DateTime focusedDay = DateTime.now();
-  Set<DateTime> learnedDate = {}; //rawDates.map(normalize).toSet();
+  Set<DateTime> learnedDate = {};
+  int streakDays = 0;
+  int bestStreakDays = 0;
   static DateTime normalize(DateTime d) => DateTime(d.year, d.month, d.day);
   bool _isLearned(DateTime day) => learnedDate.contains(normalize(day));
+
+  bool get isFireActive {
+    final yesterday = today.subtract(const Duration(days: 1));
+    return learnedDate.contains(today) || learnedDate.contains(yesterday);
+  }
 
   @override
   void initState() {
     super.initState();
-
     CalendarApi.fetchLearnedDates()
-        .then((dates) {
+        .then((stats) {
           setState(() {
-            learnedDate = dates.map(normalize).toSet();
+            learnedDate = stats.learnedDates.map(normalize).toSet();
+            streakDays = stats.streakDays;
+            bestStreakDays = stats.bestStreakDays;
           });
         })
         .catchError((e) {

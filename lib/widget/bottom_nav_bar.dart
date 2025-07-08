@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/dictionary_screen.dart';
 import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/screen/translate_screen.dart';
-import 'package:sign_language/screen/studycource_screen.dart';
+import 'package:sign_language/screen/studycourse_screen.dart';
 import 'package:sign_language/screen/bookmark_screen.dart';
 import 'package:sign_language/service/dictionary_api.dart';
 import 'package:sign_language/service/token_storage.dart';
@@ -69,7 +69,7 @@ class BottomNavBar extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => StudycourceScreen()),
+                MaterialPageRoute(builder: (context) => StudycourseScreen()),
               );
             },
             icon: Icon(Icons.menu_book_rounded, size: 28),
