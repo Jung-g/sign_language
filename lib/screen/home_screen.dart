@@ -1,6 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:sign_language/model/course_model.dart';
 import 'package:sign_language/model/mistak.dart';
 import 'package:sign_language/screen/study_calendar.dart';
 import 'package:sign_language/screen/study_screen.dart';
@@ -26,22 +26,12 @@ class HomeScreenState extends State<HomeScreen> {
   int learnedWordsCount = 0;
   int streakDays = 0;
   bool isLoading = true;
-  String? selectedCourse;
-  int currentDay = 1;
-  int totalDays = 5;
   double overallPercent = 0.0;
-  List<String> allCourses = [];
-  List<Map<String, dynamic>> words = [];
-  List<Map<String, dynamic>> steps = [];
-
-  double get percent => currentDay / totalDays;
-
-  static DateTime normalize(DateTime d) => DateTime(d.year, d.month, d.day);
 
   @override
   void initState() {
     super.initState();
-    restoreSavedCourse();
+    context.read<CourseModel>().loadFromPrefs();
     loadStudyStats();
   }
 
@@ -49,6 +39,9 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       final result = await StudyApi.getStudyStats();
       final rate = await StudyApi.getCompletionRate();
+
+      final courseModel = context.read<CourseModel>();
+      courseModel.updateCompletedSteps(result.completedSteps);
 
       setState(() {
         learnedDates = result.learnedDates.toSet();
@@ -67,29 +60,6 @@ class HomeScreenState extends State<HomeScreen> {
     final today = HomeScreen.normalize(DateTime.now());
     final yesterday = today.subtract(const Duration(days: 1));
     return learnedDates.contains(today) || learnedDates.contains(yesterday);
-  }
-
-  Future<void> restoreSavedCourse() async {
-    final prefs = await SharedPreferences.getInstance();
-    final course = prefs.getString('selectedCourse');
-    final wordStr = prefs.getString('words');
-    final courseList = prefs.getStringList('allCourses');
-    final savedDay = prefs.getInt('currentDay') ?? 1;
-    final savedTotal = prefs.getInt('totalDays') ?? 1;
-    final stepsStr = prefs.getString('steps');
-
-    if (course != null && wordStr != null && courseList != null) {
-      setState(() {
-        selectedCourse = course;
-        words = List<Map<String, dynamic>>.from(jsonDecode(wordStr));
-        currentDay = savedDay;
-        totalDays = savedTotal;
-        allCourses = courseList;
-        steps = stepsStr != null
-            ? List<Map<String, dynamic>>.from(jsonDecode(stepsStr))
-            : [];
-      });
-    }
   }
 
   Future<void> loadLearnedDates() async {
@@ -112,18 +82,9 @@ class HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
-  void resetProgress() {
-    setState(() {
-      currentDay = 1;
-    });
-  }
-
-  int getTotalSteps(List<dynamic> words) {
-    return words.map((e) => e['step']).toSet().length;
-  }
-
   @override
   Widget build(BuildContext context) {
+    final courseModel = context.watch<CourseModel>();
     final horizontalPadding = MediaQuery.of(context).size.width * 0.02;
     final mq = MediaQuery.of(context);
     final boxHeight = mq.size.height * 0.25;
@@ -165,9 +126,7 @@ class HomeScreenState extends State<HomeScreen> {
                       ),
                       Center(
                         child: Text(
-                          selectedCourse != null
-                              ? "$selectedCourse"
-                              : '학습 코스를 선택해 주세요',
+                          courseModel.selectedCourse ?? '학습 코스를 선택해 주세요',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -205,42 +164,25 @@ class HomeScreenState extends State<HomeScreen> {
                 CoursestepcardWidget(
                   boxHeight: boxHeight,
                   horizontalPadding: horizontalPadding,
-                  selectedCourse: selectedCourse,
-                  currentDay: currentDay,
-                  totalDays: totalDays,
-                  steps: steps,
-                  onSelectCourse: (detail) async {
-                    final prefs = await SharedPreferences.getInstance();
-
-                    await prefs.setString('selectedCourse', detail['course']);
-                    await prefs.setInt('sid', detail['sid']);
-                    await prefs.setString('words', jsonEncode(detail['words']));
-                    await prefs.setInt('currentDay', 1);
-                    await prefs.setInt(
-                      'totalDays',
-                      getTotalSteps(detail['words']),
-                    );
-                    await prefs.setString('steps', jsonEncode(detail['steps']));
-
-                    setState(() {
-                      selectedCourse = detail['course'];
-                      currentDay = 1;
-                      totalDays = getTotalSteps(detail['words']);
-                      steps = detail['steps'];
-                    });
+                  selectedCourse: courseModel.selectedCourse,
+                  currentDay: courseModel.currentDay,
+                  totalDays: courseModel.totalDays,
+                  steps: courseModel.steps,
+                  onSelectCourse: (_) async {
+                    await courseModel.loadFromPrefs();
                   },
-
                   onStartStudy: (day) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            StudyScreen(course: selectedCourse!, day: day),
+                        builder: (_) => StudyScreen(
+                          course: courseModel.selectedCourse!,
+                          day: day,
+                        ),
                       ),
                     );
                   },
                 ),
-
                 const SizedBox(height: 10),
                 Flexible(
                   flex: 1,
@@ -254,7 +196,7 @@ class HomeScreenState extends State<HomeScreen> {
                         color: Colors.purple[50],
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: selectedCourse != null
+                      child: courseModel.selectedCourse != null
                           ? Column(
                               children: [
                                 StetscardWidget(
@@ -281,7 +223,7 @@ class HomeScreenState extends State<HomeScreen> {
                         color: Colors.orange[50],
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: selectedCourse != null
+                      child: courseModel.selectedCourse != null
                           ? RecentMistakesCard(mistakes: recentMistakes)
                           : const SizedBox.shrink(),
                     ),

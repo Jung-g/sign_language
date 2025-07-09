@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
-import 'package:sign_language/widget/camera_widget.dart';
+// import 'package:sign_language/widget/camera_widget.dart';
 import 'package:video_player/video_player.dart';
 
 class TranslateScreen extends StatefulWidget {
@@ -20,7 +22,7 @@ class TranslateScreenState extends State<TranslateScreen> {
   // int countdown = 0;
   XFile? capturedVideo;
 
-  // CameraController? cameraController;
+  CameraController? cameraController;
 
   final TextEditingController inputController = TextEditingController();
 
@@ -43,90 +45,86 @@ class TranslateScreenState extends State<TranslateScreen> {
     });
   }
 
-  // Future<void> toggleCamera() async {
-  //   if (isCameraOn) {
-  //     await stopCamera();
-  //   } else {
-  //     await startCamera();
-  //   }
-  // }
+  Future<void> toggleCamera() async {
+    if (isCameraOn) {
+      await stopCamera();
+    } else {
+      await startCamera();
+    }
+  }
 
-  // Future<void> startCamera() async {
-  //   final cameraStatus = await Permission.camera.request();
-  //   final micStatus = await Permission.microphone.request();
-  //   if (!cameraStatus.isGranted || !micStatus.isGranted) {
-  //     Fluttertoast.showToast(
-  //       msg: '카메라 또는 마이크 권한이 거부되었습니다.',
-  //       gravity: ToastGravity.BOTTOM,
-  //       backgroundColor: Colors.red,
-  //       textColor: Colors.white,
-  //     );
-  //     return;
-  //   }
+  Future<void> startCamera() async {
+    final cameraStatus = await Permission.camera.request();
+    final micStatus = await Permission.microphone.request();
+    if (!cameraStatus.isGranted || !micStatus.isGranted) {
+      Fluttertoast.showToast(
+        msg: '카메라 또는 마이크 권한이 거부되었습니다.',
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
+      return;
+    }
 
-  //   final cameras = await availableCameras();
-  //   final frontCamera = cameras.firstWhere(
-  //     (camera) => camera.lensDirection == CameraLensDirection.front,
-  //     orElse: () => cameras.first,
-  //   );
+    final cameras = await availableCameras();
+    final frontCamera = cameras.firstWhere(
+      (camera) => camera.lensDirection == CameraLensDirection.front,
+      orElse: () => cameras.first,
+    );
 
-  //   cameraController = CameraController(
-  //     frontCamera,
-  //     ResolutionPreset.medium,
-  //     enableAudio: false,
-  //   );
+    cameraController = CameraController(
+      frontCamera,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
 
-  //   try {
-  //     await cameraController!.initialize();
-  //     await cameraController!.prepareForVideoRecording();
-  //     await cameraController!.startVideoRecording();
+    try {
+      await cameraController!.initialize();
+      await cameraController!.prepareForVideoRecording();
+      await cameraController!.startVideoRecording();
+    } catch (e) {
+      Fluttertoast.showToast(msg: "카메라 시작 실패: $e");
+      return;
+    }
 
-  //     Future.delayed(Duration(seconds: 5)).then((_) {
-  //       stopCamera();
-  //     });
-  //   } catch (e) {
-  //     Fluttertoast.showToast(msg: "카메라 시작 실패: $e");
-  //     return;
-  //   }
+    setState(() {
+      isCameraOn = true;
+    });
+  }
 
-  //   setState(() {
-  //     isCameraOn = true;
-  //   });
-  // }
+  Future<void> stopCamera() async {
+    if (cameraController == null) return;
 
-  // Future<void> stopCamera() async {
-  //   if (cameraController == null) return;
+    try {
+      if (cameraController!.value.isRecordingVideo) {
+        final file = await cameraController!.stopVideoRecording();
 
-  //   try {
-  //     if (cameraController!.value.isRecordingVideo) {
-  //       final file = await cameraController!.stopVideoRecording();
+        await Future.delayed(Duration(milliseconds: 300));
 
-  //       await Future.delayed(Duration(milliseconds: 300));
+        capturedVideo = file;
+        final size = await File(file.path).length();
+        print("영상 저장됨: ${file.path}, 크기: $size bytes");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "녹화 종료 실패: $e");
+      return;
+    }
 
-  //       capturedVideo = file;
-  //       final size = await File(file.path).length();
-  //       print("영상 저장됨: ${file.path}, 크기: $size bytes");
-  //     }
-  //   } catch (e) {
-  //     Fluttertoast.showToast(msg: "녹화 종료 실패: $e");
-  //     return;
-  //   }
+    try {
+      await Future.delayed(Duration(milliseconds: 100));
+      await cameraController!.dispose();
+    } catch (e) {
+      print("카메라 dispose 중 오류: $e");
+    }
 
-  //   try {
-  //     await Future.delayed(Duration(milliseconds: 100));
-  //     await cameraController!.dispose();
-  //   } catch (e) {
-  //     print("카메라 dispose 중 오류: $e");
-  //   }
+    cameraController = null;
 
-  //   cameraController = null;
-
-  //   if (mounted) {
-  //     setState(() {
-  //       isCameraOn = false;
-  //     });
-  //   }
-  // }
+    if (mounted) {
+      setState(() {
+        isCameraOn = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -239,27 +237,27 @@ class TranslateScreenState extends State<TranslateScreen> {
                     child: Stack(
                       children: [
                         // 카메라 영상 미리보기
-                        // if (isSignToKorean &&
-                        //     isCameraOn &&
-                        //     cameraController != null &&
-                        //     cameraController!.value.isInitialized)
-                        //   Positioned.fill(
-                        //     child: ClipRRect(
-                        //       borderRadius: BorderRadius.circular(8),
-                        //       child: CameraPreview(cameraController!),
-                        //     ),
-                        //   ),
-                        if (isSignToKorean && isCameraOn)
+                        if (isSignToKorean &&
+                            isCameraOn &&
+                            cameraController != null &&
+                            cameraController!.value.isInitialized)
                           Positioned.fill(
-                            child: CameraWidget(
-                              onFinish: (file) {
-                                setState(() {
-                                  isCameraOn = false;
-                                  capturedVideo = file;
-                                });
-                              },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CameraPreview(cameraController!),
                             ),
                           ),
+                        // if (isSignToKorean && isCameraOn)
+                        //   Positioned.fill(
+                        //     child: CameraWidget(
+                        //       onFinish: (file) {
+                        //         setState(() {
+                        //           isCameraOn = false;
+                        //           capturedVideo = file;
+                        //         });
+                        //       },
+                        //     ),
+                        //   ),
 
                         // 입력창
                         Positioned.fill(
@@ -299,10 +297,10 @@ class TranslateScreenState extends State<TranslateScreen> {
                                 color: Colors.black,
                                 size: 32,
                               ),
-                              // onPressed: toggleCamera,
-                              onPressed: () {
-                                setState(() => isCameraOn = !isCameraOn);
-                              },
+                              onPressed: toggleCamera,
+                              // onPressed: () {
+                              //   setState(() => isCameraOn = !isCameraOn);
+                              // },
                             ),
                           ),
 

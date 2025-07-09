@@ -60,7 +60,7 @@ class GenericQuizWidgetState extends State<GenericQuizWidget> {
               Navigator.pop(context);
               if (ok) {
                 if (pageIndex < widget.items.length - 1) {
-                  // 1) 다음 문제로
+                  // 1 다음 문제로
                   setState(() {
                     pageIndex++;
                     makeQuiz(pageIndex);
@@ -70,14 +70,14 @@ class GenericQuizWidgetState extends State<GenericQuizWidget> {
                     curve: Curves.easeInOut,
                   );
                 } else {
-                  // 2) 마지막 문제면 퀴즈 스텝 종료
+                  // 2 마지막 문제면 퀴즈 스텝 종료
                   context
                       .findAncestorStateOfType<StudyScreenState>()
                       ?.nextStep();
                   final courseModel = context.read<CourseModel>();
                   final selected = courseModel.selectedCourse;
                   if (selected != null) {
-                    courseModel.completeCourse(selected);
+                    // courseModel.completeCourse(selected);
                   }
 
                   courseModel.completeOneDay(); // 단계 증가
@@ -110,7 +110,7 @@ class GenericQuizWidgetState extends State<GenericQuizWidget> {
           '이것은 무엇인가요?',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        // 1) PageView 로 문제마다 컨텐츠(예: 수어 영상) 변경
+        // 1 PageView 로 문제마다 컨텐츠(예: 수어 영상) 변경
         Expanded(
           child: PageView.builder(
             // 영상 넣어야함
@@ -141,7 +141,7 @@ class GenericQuizWidgetState extends State<GenericQuizWidget> {
           ),
         ),
 
-        // 2) 보기 4지선다
+        // 2 보기 4지선다
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Wrap(

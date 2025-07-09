@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:sign_language/model/course_model.dart';
 import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/screen/login_screen.dart';
 import 'package:sign_language/service/auto_login_api.dart';
@@ -16,7 +18,12 @@ void main() async {
     isLoggedIn = result == true;
   }
 
-  runApp(MyApp(isLoggedIn: isLoggedIn));
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => CourseModel()..loadFromPrefs(),
+      child: MyApp(isLoggedIn: isLoggedIn),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -36,7 +43,7 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: isLoggedIn ? HomeScreen() : LoginScreen(),
+      home: isLoggedIn ? const HomeScreen() : const LoginScreen(),
     );
   }
 }

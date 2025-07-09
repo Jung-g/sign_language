@@ -76,7 +76,12 @@ class StudyApi {
 
   // 학습 통계 가져오기
   static Future<
-    ({List<DateTime> learnedDates, int streakDays, int learnedWordsCount})
+    ({
+      List<DateTime> learnedDates,
+      int streakDays,
+      int learnedWordsCount,
+      Map<int, List<int>> completedSteps,
+    })
   >
   getStudyStats() async {
     final accessToken = await TokenStorage.getAccessToken();
@@ -108,10 +113,21 @@ class StudyApi {
       final streak = data['streak_days'] as int;
       final count = data['learned_words_count'] as int;
 
+      final Map<int, List<int>> completed = {};
+      final completedRaw = data['completed_steps'] as Map<String, dynamic>;
+      for (final entry in completedRaw.entries) {
+        final sid = int.tryParse(entry.key);
+        final steps = (entry.value as List).cast<int>();
+        if (sid != null) {
+          completed[sid] = steps;
+        }
+      }
+
       return (
         learnedDates: dates,
         streakDays: streak,
         learnedWordsCount: count,
+        completedSteps: completed,
       );
     } else {
       throw Exception('학습 통계 조회 실패: ${response.statusCode}');

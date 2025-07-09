@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language/screen/study_screen.dart';
+import 'package:video_player/video_player.dart';
 
-/// 2. 공통 학습 위젯: PageView 로 항목별 수어 그림/영상 보여주기
 class GenericStudyWidget extends StatefulWidget {
   final List<String> items;
   final VoidCallback? onReview;
@@ -14,11 +14,25 @@ class GenericStudyWidget extends StatefulWidget {
 class GenericStudyWidgetState extends State<GenericStudyWidget> {
   late PageController pageCtrl;
   int pageIndex = 0;
+  VideoPlayerController? videoplayer;
 
   @override
   void initState() {
     super.initState();
     pageCtrl = PageController(initialPage: 0);
+    initVideo();
+  }
+
+  void initVideo() {
+    final item = widget.items[pageIndex];
+    final url = 'http://<서버주소>:<포트>/video/$item.mp4';
+
+    videoplayer?.dispose();
+    videoplayer = VideoPlayerController.network(url)
+      ..initialize().then((_) {
+        setState(() {});
+        videoplayer?.play();
+      });
   }
 
   void onNext() {
@@ -38,17 +52,28 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
   }
 
   @override
+  void dispose() {
+    videoplayer?.dispose();
+    pageCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // 1) PageView: 각 아이템 수어 애니메이션(GIF)을 보여줍니다.
+        // PageView: 각 아이템 수어 애니메이션 보여주기
         Expanded(
           child: PageView.builder(
             controller: pageCtrl,
             itemCount: widget.items.length,
-            onPageChanged: (idx) => setState(() => pageIndex = idx),
+            onPageChanged: (idx) {
+              setState(() => pageIndex = idx);
+              initVideo();
+            },
             itemBuilder: (_, i) {
               final item = widget.items[i];
+              final size = MediaQuery.of(context).size.width * 0.7;
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -57,18 +82,17 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
                     style: TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 24),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final size = constraints.maxWidth * 0.7;
-                      return Center(
-                        child: Container(
-                          width: size,
-                          height: size,
-                          color: Colors.black,
-                          child: Center(child: Text('영상 넣을 자리')),
-                        ),
-                      );
-                    },
+                  Container(
+                    width: size,
+                    height: size,
+                    color: Colors.black,
+                    child:
+                        videoplayer != null && videoplayer!.value.isInitialized
+                        ? AspectRatio(
+                            aspectRatio: videoplayer!.value.aspectRatio,
+                            child: VideoPlayer(videoplayer!),
+                          )
+                        : Center(child: CircularProgressIndicator()),
                   ),
                   SizedBox(height: 24),
                   Text('여기 카메라넣을 자리임', style: TextStyle(fontSize: 30)),
@@ -79,7 +103,7 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
             },
           ),
         ),
-        // 2) 다음 단계 버튼
+        // 다음 단계 버튼
         Padding(
           padding: EdgeInsets.all(16),
           child: ElevatedButton(
@@ -88,7 +112,7 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
           ),
         ),
 
-        //복습
+        // 복습
         if (widget.onReview != null) SizedBox(width: 12),
         if (widget.onReview != null)
           Expanded(
