@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sign_language/dummy_data.dart';
 import 'package:sign_language/model/course_model.dart';
 import 'package:sign_language/widget/new_widget/genericquiz_widget.dart';
 import 'package:sign_language/widget/new_widget/genericstudy_widget.dart';
@@ -74,7 +73,7 @@ class StudyScreenState extends State<StudyScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('단계 완료')));
       }
-      // TODO: 여기에 학습 완료 기록하는 API 호출 추가
+      // 학습내역 저장하는 API 연결하기
       Navigator.pop(context);
     }
   }

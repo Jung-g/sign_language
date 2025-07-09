@@ -20,19 +20,21 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
   void initState() {
     super.initState();
     pageCtrl = PageController(initialPage: 0);
-    initVideo();
+    // initVideo();
   }
 
   void initVideo() {
     final item = widget.items[pageIndex];
-    final url = 'http://<서버주소>:<포트>/video/$item.mp4';
 
     videoplayer?.dispose();
-    videoplayer = VideoPlayerController.network(url)
-      ..initialize().then((_) {
-        setState(() {});
-        videoplayer?.play();
-      });
+    videoplayer =
+        VideoPlayerController.networkUrl(
+            Uri.parse(
+              'http://10.101.132.200/video/${Uri.encodeComponent(item)}.mp4',
+            ),
+          )
+          ..setLooping(true)
+          ..setPlaybackSpeed(1.0);
   }
 
   void onNext() {
