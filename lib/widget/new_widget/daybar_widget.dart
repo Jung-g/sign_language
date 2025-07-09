@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 class DaybarWidget extends StatelessWidget {
   final int totalDays;
   final int currentDay; // 1부터 시작
+  final List<Map<String, dynamic>> steps;
+
   const DaybarWidget({
     super.key,
     required this.totalDays,
     required this.currentDay,
+    required this.steps,
   });
 
   @override
@@ -16,9 +19,13 @@ class DaybarWidget extends StatelessWidget {
       children: List.generate(totalDays, (index) {
         bool isCompleted = index < currentDay;
         bool isCurrent = index + 1 == currentDay;
+        final stepName = steps.length > index
+            ? steps[index]['step_name'] ?? '${index + 1}단계'
+            : '${index + 1}단계';
+
         return Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: MediaQuery.of(context).size.width * 0.04, // 디바이스별 간격
+            horizontal: MediaQuery.of(context).size.width * 0.03, // 디바이스별 간격
           ),
           child: Column(
             children: [
@@ -43,7 +50,11 @@ class DaybarWidget extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 4),
-              Text('${index + 1}단계'),
+              Text(
+                stepName,
+                style: const TextStyle(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         );

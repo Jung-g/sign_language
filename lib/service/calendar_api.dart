@@ -29,7 +29,7 @@ class CalendarApi {
       final jsonData = json.decode(response.body);
       final List<dynamic> dateList = jsonData['records'];
       final int streakDays = jsonData['streak_days'];
-      final int bestStreakDays = jsonData['best_streak_days'];
+      final int bestStreakDays = jsonData['best_streak'];
 
       final dates = dateList.map<DateTime>((dateStr) {
         final parts = dateStr.split('-');

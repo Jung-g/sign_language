@@ -32,6 +32,7 @@ class HomeScreenState extends State<HomeScreen> {
   double overallPercent = 0.0;
   List<String> allCourses = [];
   List<Map<String, dynamic>> words = [];
+  List<Map<String, dynamic>> steps = [];
 
   double get percent => currentDay / totalDays;
 
@@ -75,6 +76,7 @@ class HomeScreenState extends State<HomeScreen> {
     final courseList = prefs.getStringList('allCourses');
     final savedDay = prefs.getInt('currentDay') ?? 1;
     final savedTotal = prefs.getInt('totalDays') ?? 1;
+    final stepsStr = prefs.getString('steps');
 
     if (course != null && wordStr != null && courseList != null) {
       setState(() {
@@ -83,6 +85,9 @@ class HomeScreenState extends State<HomeScreen> {
         currentDay = savedDay;
         totalDays = savedTotal;
         allCourses = courseList;
+        steps = stepsStr != null
+            ? List<Map<String, dynamic>>.from(jsonDecode(stepsStr))
+            : [];
       });
     }
   }
@@ -203,6 +208,7 @@ class HomeScreenState extends State<HomeScreen> {
                   selectedCourse: selectedCourse,
                   currentDay: currentDay,
                   totalDays: totalDays,
+                  steps: steps,
                   onSelectCourse: (detail) async {
                     final prefs = await SharedPreferences.getInstance();
 
@@ -214,11 +220,13 @@ class HomeScreenState extends State<HomeScreen> {
                       'totalDays',
                       getTotalSteps(detail['words']),
                     );
+                    await prefs.setString('steps', jsonEncode(detail['steps']));
 
                     setState(() {
                       selectedCourse = detail['course'];
                       currentDay = 1;
                       totalDays = getTotalSteps(detail['words']);
+                      steps = detail['steps'];
                     });
                   },
 

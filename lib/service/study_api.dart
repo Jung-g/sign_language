@@ -62,10 +62,15 @@ class StudyApi {
     }
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return Map<String, dynamic>.from(data);
+      final json = jsonDecode(response.body);
+      return {
+        "sid": json["sid"],
+        "title": json["title"],
+        "words": List<Map<String, dynamic>>.from(json["words"]),
+      };
     } else {
-      throw Exception('학습 코스 세부정보 요청 실패: ${response.statusCode}');
+      final msg = response.body.isNotEmpty ? response.body : 'No details';
+      throw Exception('학습 코스 세부정보 요청 실패 (${response.statusCode}): $msg');
     }
   }
 

@@ -49,7 +49,11 @@ class _StudyCalendarState extends State<StudyCalendar> {
       body: Column(
         children: [
           const SizedBox(height: 60),
-          buildStreakStats(learnedDate),
+          buildStreakStats(
+            bestStreakDays: bestStreakDays,
+            streakDays: streakDays,
+            isFireActive: isFireActive,
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             child: Row(

@@ -93,6 +93,36 @@ class StudycourseScreenState extends State<StudycourseScreen> {
                                         );
                                     final prefs =
                                         await SharedPreferences.getInstance();
+
+                                    // words 리스트 파싱
+                                    final words =
+                                        List<Map<String, dynamic>>.from(
+                                          detail['words'],
+                                        );
+
+                                    // steps 필터링 및 타입 정렬
+                                    final seen = <int>{};
+                                    final steps = <Map<String, dynamic>>[];
+
+                                    for (final word in words) {
+                                      final step = word['step'];
+                                      final stepName = word['step_name'];
+                                      if (step != null &&
+                                          stepName != null &&
+                                          !seen.contains(step)) {
+                                        steps.add({
+                                          'step': step,
+                                          'step_name': stepName,
+                                        });
+                                        seen.add(step);
+                                      }
+                                    }
+
+                                    steps.sort(
+                                      (a, b) => a['step'].compareTo(b['step']),
+                                    );
+
+                                    // SharedPreferences 저장
                                     await prefs.setString(
                                       'selectedCourse',
                                       courseName,
@@ -100,30 +130,37 @@ class StudycourseScreenState extends State<StudycourseScreen> {
                                     await prefs.setInt('sid', detail['sid']);
                                     await prefs.setString(
                                       'words',
-                                      jsonEncode(detail['words']),
+                                      jsonEncode(words),
+                                    );
+                                    await prefs.setString(
+                                      'steps',
+                                      jsonEncode(steps),
                                     );
                                     await prefs.setStringList(
                                       'allCourses',
                                       studyList
-                                          .map<String>(
+                                          .map(
                                             (e) => e['Study_Course'].toString(),
                                           )
                                           .toList(),
                                     );
                                     await prefs.setInt('currentDay', 1);
-                                    final totalSteps = detail['words']
-                                        .map((e) => e['step'])
-                                        .toSet()
-                                        .length;
-                                    await prefs.setInt('totalDays', totalSteps);
+                                    await prefs.setInt(
+                                      'totalDays',
+                                      words
+                                          .map((e) => e['step'])
+                                          .toSet()
+                                          .length,
+                                    );
 
-                                    // 홈으로 데이터 전달
+                                    // 홈 화면으로 전달
                                     Navigator.pop(context, {
                                       'course': courseName,
                                       'sid': detail['sid'],
-                                      'words': detail['words'],
+                                      'words': words,
+                                      'steps': steps,
                                       'courseList': studyList
-                                          .map<String>(
+                                          .map(
                                             (e) => e['Study_Course'].toString(),
                                           )
                                           .toList(),

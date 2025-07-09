@@ -10,6 +10,7 @@ class CoursestepcardWidget extends StatelessWidget {
   final String? selectedCourse;
   final int currentDay;
   final int totalDays;
+  final List<Map<String, dynamic>> steps;
   final void Function(Map<String, dynamic> courseDetail) onSelectCourse;
   final void Function(int day) onStartStudy;
 
@@ -20,6 +21,7 @@ class CoursestepcardWidget extends StatelessWidget {
     required this.selectedCourse,
     required this.currentDay,
     required this.totalDays,
+    required this.steps,
     required this.onSelectCourse,
     required this.onStartStudy,
   });
@@ -59,6 +61,7 @@ class CoursestepcardWidget extends StatelessWidget {
                     child: DaybarWidget(
                       totalDays: totalDays,
                       currentDay: currentDay,
+                      steps: steps,
                     ),
                   ),
                 if (selectedCourse != null)
@@ -82,7 +85,7 @@ class CoursestepcardWidget extends StatelessWidget {
                   ),
                 if (selectedCourse != null)
                   Positioned(
-                    left: 5,
+                    left: 15,
                     bottom: 16,
                     child: ElevatedButton(
                       onPressed: () {
