@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language/screen/study_screen.dart';
+import 'package:sign_language/widget/camera_widget.dart';
 import 'package:video_player/video_player.dart';
 
 class GenericStudyWidget extends StatefulWidget {
@@ -15,6 +16,7 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
   late PageController pageCtrl;
   int pageIndex = 0;
   VideoPlayerController? videoplayer;
+  bool showCamera = false;
 
   @override
   void initState() {
@@ -76,31 +78,57 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
             itemBuilder: (_, i) {
               final item = widget.items[i];
               final size = MediaQuery.of(context).size.width * 0.7;
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    item,
-                    style: TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 24),
-                  Container(
-                    width: size,
-                    height: size,
-                    color: Colors.black,
-                    child:
-                        videoplayer != null && videoplayer!.value.isInitialized
-                        ? AspectRatio(
-                            aspectRatio: videoplayer!.value.aspectRatio,
-                            child: VideoPlayer(videoplayer!),
-                          )
-                        : Center(child: CircularProgressIndicator()),
-                  ),
-                  SizedBox(height: 24),
-                  Text('여기 카메라넣을 자리임', style: TextStyle(fontSize: 30)),
-                  SizedBox(height: 24),
-                  Text('$item 수어 표현 방법 적어야함', style: TextStyle(fontSize: 20)),
-                ],
+
+              return SingleChildScrollView(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      item,
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Container(
+                      width: size,
+                      height: size,
+                      color: Colors.black,
+                      child:
+                          videoplayer != null &&
+                              videoplayer!.value.isInitialized
+                          ? AspectRatio(
+                              aspectRatio: videoplayer!.value.aspectRatio,
+                              child: VideoPlayer(videoplayer!),
+                            )
+                          : Center(child: CircularProgressIndicator()),
+                    ),
+                    SizedBox(height: 5),
+                    IconButton(
+                      icon: Icon(Icons.videocam, size: 36),
+                      onPressed: () => setState(() => showCamera = true),
+                    ),
+                    if (showCamera)
+                      SizedBox(
+                        width: size,
+                        height: size,
+                        child: CameraWidget(
+                          onFinish: (file) {
+                            print("녹화된 경로: ${file.path}");
+                            setState(() => showCamera = false);
+                          },
+                        ),
+                      )
+                    else
+                      Text(
+                        '카메라를 실행하려면 아이콘을 누르세요',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    SizedBox(height: 10),
+                    Text('$item 수어 표현 방법 적어야함', style: TextStyle(fontSize: 20)),
+                  ],
+                ),
               );
             },
           ),
