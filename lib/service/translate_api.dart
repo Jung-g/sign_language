@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:sign_language/service/token_storage.dart';
 
-const String baseUrl = 'http://10.101.132.200';
+const String baseUrl = 'http://10.101.170.63';
 
 class TranslateApi {
   // 수어 -> 단어
@@ -92,5 +92,88 @@ class TranslateApi {
       print("영상 URL 요청 중 오류 발생: $e");
       return null;
     }
+  }
+
+  static Future<String?> sendFrames(List<String> base64Frames) async {
+    final accessToken = await TokenStorage.getAccessToken();
+    final refreshToken = await TokenStorage.getRefreshToken();
+
+    if (accessToken == null) {
+      print("Error: Access Token is missing. Cannot proceed with the request.");
+      return null;
+    }
+
+    final url = Uri.parse("$baseUrl/translate/analyze_frames");
+
+    print("--- 프레임 ${base64Frames.length}개 서버로 전송 시작...");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'X-Refresh-Token': refreshToken ?? '',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'frames': base64Frames}),
+      );
+
+      final newToken = response.headers['x-new-access-token'];
+      if (newToken != null && newToken.isNotEmpty) {
+        print("--- 새 액세스 토큰 수신 및 저장 완료.");
+        await TokenStorage.setAccessToken(newToken);
+      }
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        print("--- 서버 프레임 분석 성공: ${result['status']}");
+        return result['status'];
+      } else {
+        print("--- 서버 프레임 분석 실패: Status ${response.statusCode}");
+        print("--- 서버 응답 본문: ${response.body}");
+      }
+    } catch (e) {
+      print("--- 프레임 전송 중 예외 발생: $e");
+    }
+
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> translateLatest() async {
+    final accessToken = await TokenStorage.getAccessToken();
+    final refreshToken = await TokenStorage.getRefreshToken();
+
+    final url = Uri.parse("$baseUrl/translate/translate_latest");
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'X-Refresh-Token': refreshToken ?? '',
+        },
+      );
+
+      final newToken = response.headers['x-new-access-token'];
+      if (newToken != null && newToken.isNotEmpty) {
+        await TokenStorage.setAccessToken(newToken);
+      }
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        return {
+          'korean': result['korean'],
+          'english': result['english'],
+          'japanese': result['japanese'],
+          'chinese': result['chinese'],
+        };
+      } else {
+        print("번역 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("요청 오류: $e");
+    }
+
+    return null;
   }
 }

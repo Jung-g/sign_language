@@ -38,7 +38,11 @@ class StudyScreenState extends State<StudyScreen> {
       steps = [
         StepData(
           title: '학습',
-          widget: GenericStudyWidget(items: todayItems),
+          widget: GenericStudyWidget(
+            items: todayItems,
+            sid: courseModel.sid,
+            step: stepNumber,
+          ),
         ),
       ];
     } else {

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -8,6 +10,7 @@ import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 // import 'package:sign_language/widget/camera_widget.dart';
 import 'package:video_player/video_player.dart';
+import 'package:image/image.dart' as img;
 
 class TranslateScreen extends StatefulWidget {
   const TranslateScreen({super.key});
@@ -38,10 +41,88 @@ class TranslateScreenState extends State<TranslateScreen> {
   VideoPlayerController? controller;
   Future<void>? initVideoPlayer;
 
+  List<Uint8List> frameBuffer = [];
+  bool isProcessingFrame = false;
+
+  Timer? frameSendTimer;
+  final int framesPerSend = 10;
+  final Duration sendInterval = Duration(milliseconds: 500);
+
+  @override
+  void initState() {
+    super.initState();
+    _requestPermissions();
+  }
+
+  @override
+  void dispose() {
+    stopCamera();
+    frameSendTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _requestPermissions() async {
+    await [Permission.camera].request();
+  }
+
+  Future<void> sendFrames(List<Uint8List> frames) async {
+    print("--- 프레임 ${frames.length}개 서버로 전송 시도...");
+    final List<String> base64Frames = frames
+        .map((frame) => base64Encode(frame))
+        .toList();
+
+    try {
+      final result = await TranslateApi.sendFrames(base64Frames);
+      if (result != null) {
+        print("--- 서버 응답 성공: $result");
+      } else {
+        print("--- 서버 응답 실패: result is null");
+      }
+    } catch (e) {
+      print("--- 프레임 전송 중 오류 발생: $e");
+    }
+  }
+
+  void onFrameAvailable(CameraImage image) async {
+    if (isProcessingFrame) {
+      return;
+    }
+    isProcessingFrame = true;
+
+    try {
+      final converted = await convertYUV420toJPEG(image);
+      if (converted != null) {
+        frameBuffer.add(converted);
+      } else {
+        print("-- JPEG 변환 실패: convertYUV420toJPEG에서 null 반환");
+      }
+    } catch (e) {
+      print("--- 프레임 처리 오류 (YUV->JPEG): $e");
+    } finally {
+      isProcessingFrame = false;
+    }
+  }
+
+  void startFrameSendTimer() {
+    frameSendTimer?.cancel();
+    frameSendTimer = Timer.periodic(sendInterval, (timer) async {
+      if (frameBuffer.isNotEmpty) {
+        final framesToSend = List<Uint8List>.from(frameBuffer);
+        frameBuffer.clear();
+        await sendFrames(framesToSend);
+      }
+    });
+  }
+
+  void stopFrameSendTimer() {
+    frameSendTimer?.cancel();
+    frameSendTimer = null;
+  }
+
   void toggleDirection() {
     setState(() {
       isSignToKorean = !isSignToKorean;
-      isCameraOn = false;
+      stopCamera();
     });
   }
 
@@ -54,18 +135,6 @@ class TranslateScreenState extends State<TranslateScreen> {
   }
 
   Future<void> startCamera() async {
-    final cameraStatus = await Permission.camera.request();
-    final micStatus = await Permission.microphone.request();
-    if (!cameraStatus.isGranted || !micStatus.isGranted) {
-      Fluttertoast.showToast(
-        msg: '카메라 또는 마이크 권한이 거부되었습니다.',
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-      );
-      return;
-    }
-
     final cameras = await availableCameras();
     final frontCamera = cameras.firstWhere(
       (camera) => camera.lensDirection == CameraLensDirection.front,
@@ -76,53 +145,108 @@ class TranslateScreenState extends State<TranslateScreen> {
       frontCamera,
       ResolutionPreset.medium,
       enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.yuv420,
     );
 
     try {
       await cameraController!.initialize();
-      await cameraController!.prepareForVideoRecording();
-      await cameraController!.startVideoRecording();
+      await cameraController!.startImageStream(onFrameAvailable);
+      startFrameSendTimer();
+      setState(() => isCameraOn = true);
+      print("--- 카메라 스트림 시작됨.");
     } catch (e) {
+      print("--- 카메라 시작 실패: $e");
       Fluttertoast.showToast(msg: "카메라 시작 실패: $e");
-      return;
     }
-
-    setState(() {
-      isCameraOn = true;
-    });
   }
 
   Future<void> stopCamera() async {
     if (cameraController == null) return;
 
+    stopFrameSendTimer();
+    frameBuffer.clear();
+
     try {
+      if (cameraController!.value.isStreamingImages) {
+        await cameraController!.stopImageStream();
+        print("--- 카메라 이미지 스트림 중지됨.");
+      }
       if (cameraController!.value.isRecordingVideo) {
         final file = await cameraController!.stopVideoRecording();
-
-        await Future.delayed(Duration(milliseconds: 300));
-
         capturedVideo = file;
         final size = await File(file.path).length();
-        print("영상 저장됨: ${file.path}, 크기: $size bytes");
+        print("--- 영상 저장됨: ${file.path}, 크기: $size bytes");
       }
     } catch (e) {
-      Fluttertoast.showToast(msg: "녹화 종료 실패: $e");
-      return;
+      print("--- 녹화/스트림 종료 실패: $e");
+      Fluttertoast.showToast(msg: "녹화/스트림 종료 실패: $e");
     }
 
     try {
-      await Future.delayed(Duration(milliseconds: 100));
       await cameraController!.dispose();
+      print("--- 카메라 컨트롤러 dispose 됨.");
     } catch (e) {
-      print("카메라 dispose 중 오류: $e");
+      print("--- 카메라 dispose 중 오류: $e");
+    } finally {
+      cameraController = null;
     }
-
-    cameraController = null;
 
     if (mounted) {
       setState(() {
         isCameraOn = false;
       });
+    }
+  }
+
+  Future<Uint8List?> convertYUV420toJPEG(CameraImage image) async {
+    try {
+      final width = image.width;
+      final height = image.height;
+
+      final img.Image imgData = img.Image(width: width, height: height);
+
+      final planeY = image.planes[0];
+      final planeU = image.planes[1];
+      final planeV = image.planes[2];
+
+      final bytesY = planeY.bytes;
+      final bytesU = planeU.bytes;
+      final bytesV = planeV.bytes;
+
+      final int rowStrideY = planeY.bytesPerRow;
+      final int rowStrideU = planeU.bytesPerRow;
+      final int rowStrideV = planeV.bytesPerRow;
+      final int pixelStrideU = planeU.bytesPerPixel ?? 1;
+      final int pixelStrideV = planeV.bytesPerPixel ?? 1;
+
+      for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+          final int uvIndex = (y ~/ 2) * rowStrideU + (x ~/ 2) * pixelStrideU;
+          final int yIndex = y * rowStrideY + x;
+
+          final yp = bytesY[yIndex];
+          final up = bytesU[uvIndex];
+          final vp = bytesV[uvIndex];
+
+          int r = (yp + 1.402 * (vp - 128)).round();
+          int g = (yp - 0.344136 * (up - 128) - 0.714136 * (vp - 128)).round();
+          int b = (yp + 1.772 * (up - 128)).round();
+
+          imgData.setPixelRgb(
+            x,
+            y,
+            r.clamp(0, 255),
+            g.clamp(0, 255),
+            b.clamp(0, 255),
+          );
+        }
+      }
+
+      final encodedBytes = img.encodeJpg(imgData, quality: 80);
+      return Uint8List.fromList(encodedBytes);
+    } catch (e) {
+      print("--- convertYUV420toJPEG 오류: $e");
+      return null;
     }
   }
 
@@ -422,19 +546,66 @@ class TranslateScreenState extends State<TranslateScreen> {
                 ),
                 SizedBox(height: 4),
                 ElevatedButton(
+                  // onPressed: () async {
+                  //   if (isSignToKorean) {
+                  //     // 수어 -> 한글/일본어/영어/중국어
+                  //     if (capturedVideo == null) {
+                  //       print('촬영된 영상이 없습니다.');
+                  //       return;
+                  //     }
+
+                  //     // final videoBytes = await capturedVideo!.readAsBytes();
+                  //     // final result =
+                  //     //     await TranslateApi.translate_camera_to_word(
+                  //     //       videoBytes,
+                  //     //     );
+                  //     final result = await TranslateApi.translateLatest();
+                  //     if (result != null) {
+                  //       setState(() {
+                  //         resultKorean = result['korean'];
+                  //         resultEnglish = result['english'];
+                  //         resultJapanese = result['japanese'];
+                  //         resultChinese = result['chinese'];
+                  //       });
+                  //     } else {
+                  //       print('번역 실패');
+                  //     }
+                  //   } else {
+                  //     // 한국어 → 수어
+                  //     final word = inputController.text.trim();
+                  //     if (word.isEmpty) {
+                  //       Fluttertoast.showToast(msg: '번역할 단어를 입력하세요.');
+                  //       return;
+                  //     }
+
+                  //     final videoUrl =
+                  //         await TranslateApi.translate_word_to_video(word);
+                  //     if (controller != null &&
+                  //         controller!.value.isInitialized) {
+                  //       await controller!.pause();
+                  //       await controller!.dispose();
+                  //     }
+
+                  //     if (videoUrl != null) {
+                  //       controller = VideoPlayerController.networkUrl(
+                  //         Uri.parse(videoUrl),
+                  //       )..setPlaybackSpeed(1.0);
+
+                  //       initVideoPlayer = controller!.initialize().then((_) {
+                  //         setState(() {
+                  //           resultKorean = word;
+                  //         });
+                  //         controller!.play();
+                  //       });
+                  //     } else {
+                  //       Fluttertoast.showToast(msg: '수어 애니메이션이 없습니다.');
+                  //     }
+                  //   }
+                  // },
                   onPressed: () async {
                     if (isSignToKorean) {
-                      // 수어 -> 한글/일본어/영어/중국어
-                      if (capturedVideo == null) {
-                        print('촬영된 영상이 없습니다.');
-                        return;
-                      }
-
-                      final videoBytes = await capturedVideo!.readAsBytes();
-                      final result =
-                          await TranslateApi.translate_camera_to_word(
-                            videoBytes,
-                          );
+                      // ✅ 프레임 기반이라 영상 파일 존재 여부는 체크할 필요 없음
+                      final result = await TranslateApi.translateLatest();
                       if (result != null) {
                         setState(() {
                           resultKorean = result['korean'];

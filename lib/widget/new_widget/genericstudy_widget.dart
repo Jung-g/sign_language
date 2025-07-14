@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language/screen/study_screen.dart';
+import 'package:sign_language/service/study_api.dart';
 import 'package:sign_language/widget/camera_widget.dart';
 import 'package:video_player/video_player.dart';
 
 class GenericStudyWidget extends StatefulWidget {
   final List<String> items;
+  final int sid;
+  final int step;
   final VoidCallback? onReview;
-  const GenericStudyWidget({super.key, required this.items, this.onReview});
+  const GenericStudyWidget({
+    super.key,
+    required this.items,
+    required this.sid,
+    required this.step,
+    this.onReview,
+  });
 
   @override
   State<GenericStudyWidget> createState() => GenericStudyWidgetState();
@@ -32,20 +41,27 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
     videoplayer =
         VideoPlayerController.networkUrl(
             Uri.parse(
-              'http://10.101.132.200/video/${Uri.encodeComponent(item)}.mp4',
+              'http://10.101.170.63/video/${Uri.encodeComponent(item)}.mp4',
             ),
           )
           ..setLooping(true)
           ..setPlaybackSpeed(1.0);
   }
 
-  void onNext() {
+  Future<void> onNext() async {
     if (pageIndex < widget.items.length - 1) {
       pageCtrl.nextPage(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
+      try {
+        await StudyApi.completeStudy(sid: widget.sid, step: widget.step);
+        print("학습 완료 저장 성공");
+      } catch (e) {
+        print("학습 완료 저장 실패: $e");
+      }
+
       final screenState = context.findAncestorStateOfType<StudyScreenState>();
       if (screenState != null) {
         screenState.nextStep();
@@ -145,10 +161,17 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
         // 복습
         if (widget.onReview != null) SizedBox(width: 12),
         if (widget.onReview != null)
-          Expanded(
-            child: OutlinedButton(
-              onPressed: widget.onReview,
-              child: Text("복습하기"),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: widget.onReview,
+                    child: Text("복습하기"),
+                  ),
+                ),
+              ],
             ),
           ),
       ],

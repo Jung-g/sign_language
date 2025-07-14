@@ -80,9 +80,9 @@ class RecentMistakesCard extends StatelessWidget {
                                             appBar: AppBar(
                                               title: Text('${m.correct} 복습'),
                                             ),
-                                            body: GenericStudyWidget(
-                                              items: [m.correct],
-                                            ),
+                                            // body: GenericStudyWidget(
+                                            //   items: [m.correct],
+                                            // ),
                                           ),
                                         ),
                                       );

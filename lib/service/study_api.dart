@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:sign_language/service/token_storage.dart';
 
-const String baseUrl = 'http://10.101.132.200';
+const String baseUrl = 'http://10.101.170.63';
 
 class StudyApi {
   // 학습 코스 목록 불러오기
@@ -163,6 +163,37 @@ class StudyApi {
       return percent.toDouble();
     } else {
       throw Exception('학습 완료율 조회 실패: ${response.statusCode}');
+    }
+  }
+
+  // 학습 완료 저장
+  static Future<void> completeStudy({
+    required int sid,
+    required int step,
+  }) async {
+    final accessToken = await TokenStorage.getAccessToken();
+    final refreshToken = await TokenStorage.getRefreshToken();
+
+    if (accessToken == null) throw Exception("accessToken 없음");
+    if (refreshToken == null) throw Exception("refreshToken 없음");
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/study/complete'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'X-Refresh-Token': refreshToken,
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'sid': sid, 'step': step}),
+    );
+
+    final newAccessToken = response.headers['x-new-access-token'];
+    if (newAccessToken != null && newAccessToken.isNotEmpty) {
+      await TokenStorage.setAccessToken(newAccessToken);
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception('학습 완료 실패: ${response.statusCode} ${response.body}');
     }
   }
 }
