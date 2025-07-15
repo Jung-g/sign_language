@@ -1,167 +1,232 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_language/model/course_model.dart';
-import 'package:sign_language/screen/study_screen.dart';
+import 'package:sign_language/service/study_api.dart';
+import 'package:video_player/video_player.dart';
 
-/// 3. 공통 퀴즈 위젯: 4지선다로 맞추기
 class GenericQuizWidget extends StatefulWidget {
-  final List<String> items;
-  const GenericQuizWidget({super.key, required this.items});
+  final List<Map<String, dynamic>> words;
+  final int? sid;
+  final int? step;
+  final bool completeOnFinish;
+  final bool showAppBar;
+
+  const GenericQuizWidget({
+    super.key,
+    required this.words,
+    this.sid,
+    this.step,
+    this.completeOnFinish = true,
+    this.showAppBar = false,
+  });
 
   @override
-  State<GenericQuizWidget> createState() => GenericQuizWidgetState();
+  State<GenericQuizWidget> createState() => _GenericQuizWidgetState();
 }
 
-class GenericQuizWidgetState extends State<GenericQuizWidget> {
-  late final PageController pageCtrl;
-  int pageIndex = 0;
+class _GenericQuizWidgetState extends State<GenericQuizWidget> {
+  late List<Map<String, dynamic>> quizList;
+  int index = 0;
+  int correctCount = 0;
+  bool answered = false;
+  bool? answereIcon;
   late String correct;
-  late List<String> options;
+  List<String> options = [];
+  VideoPlayerController? videoplayer;
 
   @override
   void initState() {
     super.initState();
-    pageCtrl = PageController();
-    makeQuiz(0);
+    quizList = List<Map<String, dynamic>>.from(widget.words)..shuffle();
+    setup();
+  }
+
+  void setup() {
+    final current = quizList[index];
+    correct = current['word']?.toString() ?? '';
+
+    final allWords =
+        widget.words
+            .map((w) => w['word'].toString())
+            .where((w) => w != correct)
+            .toList()
+          ..shuffle();
+
+    options = [correct, ...allWords.take(3)]..shuffle();
+
+    // videoplayer?.dispose();
+    // videoplayer = VideoPlayerController.networkUrl(
+    //   Uri.parse('http://10.101.170.63/video/${Uri.encodeComponent(correct)}.mp4'),
+    // )
+    //   ..setLooping(true)
+    //   ..setPlaybackSpeed(1.0)
+    //   ..initialize().then((_) {
+    //     if (mounted) setState(() {});
+    //   });
+  }
+
+  void onOptionSelected(String selected) {
+    if (answered) return;
+
+    final isCorrect = selected == correct;
+
+    setState(() {
+      answered = true;
+      answereIcon = isCorrect;
+      if (selected == correct) correctCount++;
+    });
+
+    Future.delayed(const Duration(seconds: 1), () {
+      setState(() {
+        answereIcon = null;
+      });
+      onNext();
+    });
+  }
+
+  void onNext() async {
+    if (index < quizList.length - 1) {
+      setState(() {
+        index++;
+        answered = false;
+        setup();
+      });
+    } else {
+      final accuracy = correctCount / quizList.length;
+      final percent = (accuracy * 100).toStringAsFixed(1);
+
+      if (accuracy >= 0.6 &&
+          widget.completeOnFinish &&
+          widget.sid != null &&
+          widget.step != null) {
+        try {
+          await StudyApi.completeStudy(sid: widget.sid!, step: widget.step!);
+
+          final stats = await StudyApi.getStudyStats();
+          if (context.mounted) {
+            context.read<CourseModel>().updateCompletedSteps(
+              stats.completedSteps,
+            );
+          }
+
+          Fluttertoast.showToast(
+            msg: "퀴즈 완료! 정답률: $percent%",
+            toastLength: Toast.LENGTH_SHORT,
+          );
+        } catch (e) {
+          Fluttertoast.showToast(
+            msg: "저장 실패: $e",
+            toastLength: Toast.LENGTH_SHORT,
+          );
+        }
+      } else {
+        Fluttertoast.showToast(
+          msg: "퀴즈 실패... ($percent%) 다시 도전해보세요!",
+          toastLength: Toast.LENGTH_SHORT,
+        );
+      }
+
+      Navigator.pop(context);
+    }
   }
 
   @override
   void dispose() {
-    pageCtrl.dispose();
+    videoplayer?.dispose();
     super.dispose();
-  }
-
-  void makeQuiz(int index) {
-    final rnd = Random();
-    correct = widget.items[index];
-    options =
-        <String>{correct}
-            .union(
-              List.generate(
-                3,
-                (_) => widget.items[rnd.nextInt(widget.items.length)],
-              ).toSet(),
-            )
-            .toList()
-          ..shuffle();
-  }
-
-  void onSubmit(String pick) {
-    final ok = pick == correct;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(ok ? '정답입니다!' : '오답입니다'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (ok) {
-                if (pageIndex < widget.items.length - 1) {
-                  // 1 다음 문제로
-                  setState(() {
-                    pageIndex++;
-                    makeQuiz(pageIndex);
-                  });
-                  pageCtrl.nextPage(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                } else {
-                  // 2 마지막 문제면 퀴즈 스텝 종료
-                  context
-                      .findAncestorStateOfType<StudyScreenState>()
-                      ?.nextStep();
-                  final courseModel = context.read<CourseModel>();
-                  final selected = courseModel.selectedCourse;
-                  if (selected != null) {
-                    // courseModel.completeCourse(selected);
-                  }
-
-                  courseModel.completeOneDay(); // 단계 증가
-                  if (courseModel.isStepCompleted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('단계 완료')));
-                  }
-                }
-              }
-            },
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(height: 24),
-        Text(
-          '문제 (${pageIndex + 1} / ${widget.items.length})',
-          style: TextStyle(fontSize: 16),
-        ),
-        SizedBox(height: 8),
-        Text(
-          '이것은 무엇인가요?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        // 1 PageView 로 문제마다 컨텐츠(예: 수어 영상) 변경
-        Expanded(
-          child: PageView.builder(
-            // 영상 넣어야함
-            controller: pageCtrl,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: widget.items.length,
-            onPageChanged: (i) {
-              setState(() {
-                pageIndex = i;
-                makeQuiz(i);
-              });
-            },
-            itemBuilder: (_, i) {
-              final item = widget.items[i];
-              return Center(
-                child: FractionallySizedBox(
-                  widthFactor: 0.8,
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Container(
-                      color: Colors.black12,
-                      child: Center(child: Text('$item 영상 자리')),
-                    ),
+    final size = MediaQuery.of(context).size.width * 0.7;
+
+    return Scaffold(
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text('복습 퀴즈'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              ),
+            )
+          : null,
+      body: SafeArea(
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(height: 30),
+                Text(
+                  // 디버그용 나중에 삭제할 것 + 바로 아래 SizedBox는 height: 100으로 수정
+                  correct,
+                  style: const TextStyle(
+                    fontSize: 60,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-
-        // 2 보기 4지선다
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            children: options.map((o) {
-              return SizedBox(
-                width: (MediaQuery.of(context).size.width - 16 * 2 - 12) / 2,
-                child: OutlinedButton(
-                  onPressed: () => onSubmit(o),
-                  child: Text(o, style: TextStyle(fontSize: 18)),
+                const SizedBox(height: 10),
+                Container(
+                  width: size,
+                  height: size,
+                  color: Colors.black,
+                  child:
+                      (videoplayer != null && videoplayer!.value.isInitialized)
+                      ? AspectRatio(
+                          aspectRatio: videoplayer!.value.aspectRatio,
+                          child: VideoPlayer(videoplayer!),
+                        )
+                      : const Center(child: CircularProgressIndicator()),
                 ),
-              );
-            }).toList(),
-          ),
-        ),
+                const SizedBox(height: 50),
+                Text(
+                  '정답 $correctCount / ${quizList.length}',
+                  style: const TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 50),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 2.8,
+                    children: List.generate(options.length, (i) {
+                      final opt = options[i];
 
-        SizedBox(height: 16),
-      ],
+                      return ElevatedButton(
+                        onPressed: answered
+                            ? null
+                            : () => onOptionSelected(opt),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.deepPurple,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(opt, style: const TextStyle(fontSize: 18)),
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
+            if (answereIcon != null)
+              Container(
+                alignment: Alignment.center,
+                child: Icon(
+                  answereIcon! ? Icons.circle_outlined : Icons.close,
+                  size: 150,
+                  color: answereIcon! ? Colors.green : Colors.red,
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

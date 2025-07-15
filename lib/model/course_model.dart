@@ -44,6 +44,7 @@ class CourseModel with ChangeNotifier {
           )
         : {};
 
+    assignSidToWords();
     notifyListeners();
   }
 
@@ -74,7 +75,9 @@ class CourseModel with ChangeNotifier {
     _selectedCourse = course;
     _sid = sid;
     _words = words;
-    _steps = steps;
+    _steps = steps.map((step) {
+      return {...step, 'sid': sid, 'course': course};
+    }).toList();
     _totalDays = steps.length;
     _currentDay = getNextUncompletedStep() ?? 1;
     saveToPrefs();
@@ -120,16 +123,84 @@ class CourseModel with ChangeNotifier {
 
     // 현재 선택된 코스가 있으면 해당 SID 기준으로 currentDay 계산
     if (_sid != 0 && _completedSteps.containsKey(_sid)) {
-      final doneSteps = _completedSteps[_sid]!;
-      _currentDay = doneSteps.isEmpty
-          ? 1
-          : (doneSteps.reduce((a, b) => a > b ? a : b) + 1);
-      if (_currentDay > _totalDays) _currentDay = _totalDays;
+      _currentDay = getNextUncompletedStep() ?? _totalDays + 1;
     } else {
       _currentDay = 1;
     }
 
     saveToPrefs();
+    notifyListeners();
+  }
+
+  void assignSidToWords() {
+    for (final step in _steps) {
+      final sid = step['sid'] ?? _sid;
+      final stepNumber = int.tryParse(step['step'].toString());
+
+      for (final word in _words) {
+        final wordStep = int.tryParse(word['step'].toString());
+
+        if (wordStep != null && stepNumber != null && wordStep == stepNumber) {
+          word['sid'] ??= sid;
+          word['course'] ??= step['course'] ?? step['step_name'] ?? '기타';
+          print("SID 할당: ${word['word']} → $sid, course: ${word['course']}");
+        }
+      }
+    }
+  }
+
+  Map<String, List<Map<String, dynamic>>> getCompletedCourseStep5Words() {
+    final result = <String, List<Map<String, dynamic>>>{};
+
+    final groupedByCourse = <String, List<Map<String, dynamic>>>{};
+    for (final word in _words) {
+      if (word['step'] == 5 && word['sid'] != null) {
+        final course = word['course'] ?? '기타';
+        groupedByCourse.putIfAbsent(course, () => []).add(word);
+      }
+    }
+
+    groupedByCourse.forEach((courseName, words) {
+      result[courseName] = words;
+    });
+
+    return result;
+  }
+
+  void debugWords() {
+    print('단어 목록: ');
+    for (final w in _words) {
+      print(
+        '→ sid: ${w['sid']}, step: ${w['step']}, word: ${w['word']}, course: ${w['course']}}',
+      );
+    }
+
+    print('스텝 목록: ');
+    for (final s in _steps) {
+      print('→ step: ${s['step']}, sid: ${s['sid']}, name: ${s['step_name']}');
+    }
+
+    print('sid: $_sid');
+  }
+
+  Future<void> clearSelectedCourse() async {
+    _selectedCourse = null;
+    _sid = 0;
+    _words = [];
+    _steps = [];
+    _currentDay = 1;
+    _totalDays = 1;
+    _completedSteps = {};
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('selectedCourse');
+    await prefs.remove('sid');
+    await prefs.remove('words');
+    await prefs.remove('steps');
+    await prefs.remove('currentDay');
+    await prefs.remove('totalDays');
+    await prefs.remove('completedSteps');
+
     notifyListeners();
   }
 }

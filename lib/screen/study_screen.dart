@@ -29,10 +29,11 @@ class StudyScreenState extends State<StudyScreen> {
     final courseModel = context.read<CourseModel>();
     final stepNumber = widget.day; // 실제 step 번호 (1부터 시작)
 
-    todayItems = courseModel.words
+    final todayWordMaps = courseModel.words
         .where((w) => w['step'] == stepNumber)
-        .map((w) => w['word'].toString())
         .toList();
+
+    todayItems = todayWordMaps.map((w) => w['word'].toString()).toList();
 
     if (stepNumber < 5) {
       steps = [
@@ -49,7 +50,11 @@ class StudyScreenState extends State<StudyScreen> {
       steps = [
         StepData(
           title: '퀴즈',
-          widget: GenericQuizWidget(items: todayItems),
+          widget: GenericQuizWidget(
+            words: todayWordMaps,
+            sid: courseModel.sid,
+            step: stepNumber,
+          ),
         ),
       ];
     }
@@ -77,7 +82,6 @@ class StudyScreenState extends State<StudyScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('단계 완료')));
       }
-      // 학습내역 저장하는 API 연결하기
       Navigator.pop(context);
     }
   }

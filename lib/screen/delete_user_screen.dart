@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:provider/provider.dart';
+import 'package:sign_language/model/course_model.dart';
 import 'package:sign_language/screen/login_screen.dart';
 import 'package:sign_language/service/delete_user_api.dart';
 import 'package:sign_language/service/token_storage.dart';
@@ -31,6 +33,8 @@ class _DeleteUserScreenState extends State<DeleteUserScreen> {
 
     if (success) {
       await TokenStorage.clearTokens();
+      final courseModel = context.read<CourseModel>();
+      await courseModel.clearSelectedCourse();
       Fluttertoast.showToast(msg: "회원 탈퇴가 완료되었습니다.");
 
       Navigator.of(context).pushReplacement(

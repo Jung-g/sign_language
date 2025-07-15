@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_language/model/course_model.dart';
-import 'package:sign_language/model/mistak.dart';
 import 'package:sign_language/screen/study_calendar.dart';
 import 'package:sign_language/screen/study_screen.dart';
 import 'package:sign_language/screen/user_screen.dart';
@@ -9,7 +8,7 @@ import 'package:sign_language/service/calendar_api.dart';
 import 'package:sign_language/service/study_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/new_widget/coursestepcard_widget.dart';
-import 'package:sign_language/widget/new_widget/recentmistakescard_widget.dart';
+import 'package:sign_language/widget/new_widget/review_widget.dart';
 import 'package:sign_language/widget/new_widget/stetscard_widget.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,8 +30,8 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<CourseModel>().loadFromPrefs();
     loadStudyStats();
+    context.read<CourseModel>().debugWords();
   }
 
   Future<void> loadStudyStats() async {
@@ -73,14 +72,6 @@ class HomeScreenState extends State<HomeScreen> {
       debugPrint('학습 날짜 불러오기 실패: $e');
     }
   }
-
-  final recentMistakes = [
-    Mistake(
-      prompt: '이것은 무엇인가요?',
-      assetPath: 'assets/signs/4.gif',
-      correct: '4',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -196,17 +187,15 @@ class HomeScreenState extends State<HomeScreen> {
                         color: Colors.purple[50],
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: courseModel.selectedCourse != null
-                          ? Column(
-                              children: [
-                                StetscardWidget(
-                                  learnedWords: learnedWordsCount,
-                                  streakDays: streakDays,
-                                  overallPercent: overallPercent,
-                                ),
-                              ],
-                            )
-                          : const SizedBox.shrink(),
+                      child: Column(
+                        children: [
+                          StetscardWidget(
+                            learnedWords: learnedWordsCount,
+                            streakDays: streakDays,
+                            overallPercent: overallPercent,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -223,9 +212,7 @@ class HomeScreenState extends State<HomeScreen> {
                         color: Colors.orange[50],
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: courseModel.selectedCourse != null
-                          ? RecentMistakesCard(mistakes: recentMistakes)
-                          : const SizedBox.shrink(),
+                      child: ReviewCard(),
                     ),
                   ),
                 ),
