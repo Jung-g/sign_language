@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language/screen/study_screen.dart';
 import 'package:sign_language/service/study_api.dart';
+import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/camera_widget.dart';
 import 'package:video_player/video_player.dart';
 
@@ -130,9 +131,29 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
                         width: size,
                         height: size,
                         child: CameraWidget(
-                          onFinish: (file) {
+                          // onFinish: (file) {
+                          //   print("녹화된 경로: ${file.path}");
+                          //   setState(() => showCamera = false);
+                          // },
+                          onFinish: (file) async {
                             print("녹화된 경로: ${file.path}");
                             setState(() => showCamera = false);
+
+                            final result = await TranslateApi.signToText(
+                              file.path,
+                            );
+                            print('번역 결과: $result');
+
+                            // 예: 정확도나 번역 결과 표시
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: Text('분석 결과'),
+                                content: Text(
+                                  result,
+                                ), // result가 {"result": "...", "confidence": "..."} 형태일 수 있음
+                              ),
+                            );
                           },
                         ),
                       )

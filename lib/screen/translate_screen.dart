@@ -8,9 +8,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
-// import 'package:sign_language/widget/camera_widget.dart';
 import 'package:video_player/video_player.dart';
 import 'package:image/image.dart' as img;
+// import 'package:sign_language/widget/camera_widget.dart';
 
 class TranslateScreen extends StatefulWidget {
   const TranslateScreen({super.key});
@@ -22,10 +22,10 @@ class TranslateScreen extends StatefulWidget {
 class TranslateScreenState extends State<TranslateScreen> {
   bool isSignToKorean = true; // true: 수어 -> 한글 | false 한글 -> 수어
   bool isCameraOn = false;
-  // int countdown = 0;
   XFile? capturedVideo;
-
+  bool isProcessingFrame = false;
   CameraController? cameraController;
+  final List<Uint8List> frameBuffer = [];
 
   final TextEditingController inputController = TextEditingController();
 
@@ -41,13 +41,6 @@ class TranslateScreenState extends State<TranslateScreen> {
   VideoPlayerController? controller;
   Future<void>? initVideoPlayer;
 
-  List<Uint8List> frameBuffer = [];
-  bool isProcessingFrame = false;
-
-  Timer? frameSendTimer;
-  final int framesPerSend = 10;
-  final Duration sendInterval = Duration(milliseconds: 500);
-
   @override
   void initState() {
     super.initState();
@@ -57,7 +50,6 @@ class TranslateScreenState extends State<TranslateScreen> {
   @override
   void dispose() {
     stopCamera();
-    frameSendTimer?.cancel();
     super.dispose();
   }
 
@@ -84,39 +76,26 @@ class TranslateScreenState extends State<TranslateScreen> {
   }
 
   void onFrameAvailable(CameraImage image) async {
-    if (isProcessingFrame) {
-      return;
-    }
+    if (isProcessingFrame) return;
     isProcessingFrame = true;
 
     try {
-      final converted = await convertYUV420toJPEG(image);
-      if (converted != null) {
-        frameBuffer.add(converted);
+      final jpeg = await convertYUV420toJPEG(image);
+      if (jpeg != null) {
+        frameBuffer.add(jpeg);
+
+        if (frameBuffer.length >= 5) {
+          await sendFrames(List.from(frameBuffer));
+          frameBuffer.clear();
+        }
       } else {
-        print("-- JPEG 변환 실패: convertYUV420toJPEG에서 null 반환");
+        print("--- JPEG 변환 실패: convertYUV420toJPEG에서 null 반환");
       }
     } catch (e) {
       print("--- 프레임 처리 오류 (YUV->JPEG): $e");
     } finally {
       isProcessingFrame = false;
     }
-  }
-
-  void startFrameSendTimer() {
-    frameSendTimer?.cancel();
-    frameSendTimer = Timer.periodic(sendInterval, (timer) async {
-      if (frameBuffer.isNotEmpty) {
-        final framesToSend = List<Uint8List>.from(frameBuffer);
-        frameBuffer.clear();
-        await sendFrames(framesToSend);
-      }
-    });
-  }
-
-  void stopFrameSendTimer() {
-    frameSendTimer?.cancel();
-    frameSendTimer = null;
   }
 
   void toggleDirection() {
@@ -145,13 +124,12 @@ class TranslateScreenState extends State<TranslateScreen> {
       frontCamera,
       ResolutionPreset.medium,
       enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.yuv420,
+      imageFormatGroup: ImageFormatGroup.yuv420, // JPEG이 아닌 YUV로 유지
     );
 
     try {
       await cameraController!.initialize();
       await cameraController!.startImageStream(onFrameAvailable);
-      startFrameSendTimer();
       setState(() => isCameraOn = true);
       print("--- 카메라 스트림 시작됨.");
     } catch (e) {
@@ -162,9 +140,6 @@ class TranslateScreenState extends State<TranslateScreen> {
 
   Future<void> stopCamera() async {
     if (cameraController == null) return;
-
-    stopFrameSendTimer();
-    frameBuffer.clear();
 
     try {
       if (cameraController!.value.isStreamingImages) {

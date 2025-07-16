@@ -176,4 +176,21 @@ class TranslateApi {
 
     return null;
   }
+
+  static Future<String> signToText(String videoPath) async {
+    final uri = Uri.parse('http://서버주소/translate/sign_to_text');
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('video', videoPath));
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return json['result'] ?? '분석 실패';
+    } else {
+      print('서버 오류: ${response.body}');
+      return '서버 오류 발생';
+    }
+  }
 }
