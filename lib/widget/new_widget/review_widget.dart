@@ -50,7 +50,7 @@ class ReviewCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      entry.key,
+                      '${entry.key} 복습 퀴즈',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

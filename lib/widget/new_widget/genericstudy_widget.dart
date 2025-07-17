@@ -27,6 +27,7 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
   int pageIndex = 0;
   VideoPlayerController? videoplayer;
   bool showCamera = false;
+  bool isAnalyzing = false;
 
   @override
   void initState() {
@@ -81,6 +82,19 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
 
   @override
   Widget build(BuildContext context) {
+    if (isAnalyzing) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text("동작 확인중! 조금만 기다려주세요", style: TextStyle(fontSize: 18)),
+          ],
+        ),
+      );
+    }
+
     return Column(
       children: [
         // PageView: 각 아이템 수어 애니메이션 보여주기
@@ -136,22 +150,59 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
                           //   setState(() => showCamera = false);
                           // },
                           onFinish: (file) async {
-                            print("녹화된 경로: ${file.path}");
-                            setState(() => showCamera = false);
+                            setState(() {
+                              isAnalyzing = true;
+                            });
 
+                            final expected = widget.items[pageIndex];
                             final result = await TranslateApi.signToText(
                               file.path,
+                              expected,
                             );
-                            print('번역 결과: $result');
+                            final isCorrect = result['match'] == true;
 
-                            // 예: 정확도나 번역 결과 표시
-                            showDialog(
+                            setState(() {
+                              isAnalyzing = false;
+                              showCamera = false;
+                            });
+
+                            if (!mounted) return;
+
+                            await showDialog(
                               context: context,
                               builder: (_) => AlertDialog(
-                                title: Text('분석 결과'),
-                                content: Text(
-                                  result,
-                                ), // result가 {"result": "...", "confidence": "..."} 형태일 수 있음
+                                title: isCorrect
+                                    ? const Text(
+                                        '정답입니다!',
+                                        style: TextStyle(color: Colors.green),
+                                      )
+                                    : const Text(
+                                        '오답입니다',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      isCorrect ? 'O' : 'X',
+                                      style: TextStyle(
+                                        fontSize: 80,
+                                        fontWeight: FontWeight.bold,
+                                        color: isCorrect
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                    ),
+                                    if (!isCorrect)
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 10),
+                                        child: Text(
+                                          '다시 시도해주세요',
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             );
                           },

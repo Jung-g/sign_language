@@ -74,10 +74,14 @@ class CourseModel with ChangeNotifier {
   }) {
     _selectedCourse = course;
     _sid = sid;
-    _words = words;
+    _words = words.map((word) {
+      return {...word, 'sid': sid, 'course': course};
+    }).toList();
+
     _steps = steps.map((step) {
       return {...step, 'sid': sid, 'course': course};
     }).toList();
+
     _totalDays = steps.length;
     _currentDay = getNextUncompletedStep() ?? 1;
     saveToPrefs();
@@ -142,7 +146,7 @@ class CourseModel with ChangeNotifier {
 
         if (wordStep != null && stepNumber != null && wordStep == stepNumber) {
           word['sid'] ??= sid;
-          word['course'] ??= step['course'] ?? step['step_name'] ?? '기타';
+          word['course'] ??= _selectedCourse;
           print("SID 할당: ${word['word']} → $sid, course: ${word['course']}");
         }
       }

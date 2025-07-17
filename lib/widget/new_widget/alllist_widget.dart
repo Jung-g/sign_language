@@ -31,7 +31,7 @@ class AlllistWidget extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    name,
+                    '$name 복습 퀴즈',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

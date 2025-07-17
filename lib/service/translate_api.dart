@@ -177,20 +177,40 @@ class TranslateApi {
     return null;
   }
 
-  static Future<String> signToText(String videoPath) async {
-    final uri = Uri.parse('http://서버주소/translate/sign_to_text');
-    final request = http.MultipartRequest('POST', uri)
-      ..files.add(await http.MultipartFile.fromPath('video', videoPath));
+  static Future<Map<String, dynamic>> signToText(
+    String videoPath,
+    String expectedWord,
+  ) async {
+    try {
+      final accessToken = await TokenStorage.getAccessToken();
+      final refreshToken = await TokenStorage.getRefreshToken();
 
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
+      final uri = Uri.parse('$baseUrl/translate/sign_to_text');
 
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      return json['result'] ?? '분석 실패';
-    } else {
-      print('서버 오류: ${response.body}');
-      return '서버 오류 발생';
+      final request = http.MultipartRequest('POST', uri)
+        ..fields['expected_word'] = expectedWord
+        ..files.add(await http.MultipartFile.fromPath('file', videoPath))
+        ..headers.addAll({
+          'Authorization': 'Bearer $accessToken',
+          'X-Refresh-Token': refreshToken ?? '',
+        });
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+
+      final newAccessToken = response.headers['x-new-access-token'];
+      if (newAccessToken != null && newAccessToken.isNotEmpty) {
+        await TokenStorage.setAccessToken(newAccessToken);
+      }
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('서버 오류: ${response.body}');
+      }
+    } catch (e) {
+      print('signToText 오류: $e');
+      return {"error": true, "message": e.toString()};
     }
   }
 }
