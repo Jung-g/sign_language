@@ -3,7 +3,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:sign_language/service/token_storage.dart';
 
-const String baseUrl = 'http://10.101.170.63';
+const String baseUrl = 'http://10.101.170.168';
 
 class PasswordResetApi {
   // userID 존재 여부 확인

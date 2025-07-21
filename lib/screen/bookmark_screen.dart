@@ -116,7 +116,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
       controller =
           VideoPlayerController.networkUrl(
               Uri.parse(
-                'http://10.101.170.63/video/${Uri.encodeComponent(word)}.mp4',
+                'http://10.101.170.168/video/${Uri.encodeComponent(word)}.mp4',
               ),
             )
             ..setLooping(true)
