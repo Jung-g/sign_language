@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/studycourse_screen.dart';
-import 'package:sign_language/widget/new_widget/daybar_widget.dart';
+import 'package:sign_language/widget/daybar_widget.dart';
 
 class CoursestepcardWidget extends StatelessWidget {
   final double boxHeight;

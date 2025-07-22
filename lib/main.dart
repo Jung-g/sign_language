@@ -16,6 +16,9 @@ void main() async {
   if (refreshToken != null && refreshToken.isNotEmpty) {
     final result = await AutoLoginApi.autoLogin(refreshToken);
     isLoggedIn = result == true;
+  } else {
+    print('[INFO] refresh token 없음 또는 복호화 실패 → 자동 로그인 실패 → 토큰 초기화');
+    await TokenStorage.clearTokens();
   }
 
   runApp(

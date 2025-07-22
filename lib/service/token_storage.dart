@@ -17,16 +17,50 @@ class TokenStorage {
     await _storage.write(key: 'nickname', value: nickname);
   }
 
-  static Future<String?> getAccessToken() async =>
-      await _storage.read(key: 'access_token');
-  static Future<String?> getRefreshToken() async =>
-      await _storage.read(key: 'refresh_token');
-  static Future<String?> getExpiresAt() async =>
-      await _storage.read(key: 'expires_at');
-  static Future<String?> getUserID() async =>
-      await _storage.read(key: 'user_id');
-  static Future<String?> getNickName() async =>
-      await _storage.read(key: 'nickname');
+  static Future<String?> getAccessToken() async {
+    try {
+      return await _storage.read(key: 'access_token');
+    } catch (e) {
+      print('[ERROR] access_token 읽기 실패: $e');
+      return null;
+    }
+  }
+
+  static Future<String?> getRefreshToken() async {
+    try {
+      return await _storage.read(key: 'refresh_token');
+    } catch (e) {
+      print('[ERROR] refresh_token 읽기 실패: $e');
+      return null;
+    }
+  }
+
+  static Future<String?> getExpiresAt() async {
+    try {
+      return await _storage.read(key: 'expires_at');
+    } catch (e) {
+      print('[ERROR] expires_at 읽기 실패: $e');
+      return null;
+    }
+  }
+
+  static Future<String?> getUserID() async {
+    try {
+      return await _storage.read(key: 'user_id');
+    } catch (e) {
+      print('[ERROR] user_id 읽기 실패: $e');
+      return null;
+    }
+  }
+
+  static Future<String?> getNickName() async {
+    try {
+      return await _storage.read(key: 'nickname');
+    } catch (e) {
+      print('[ERROR] nickname 읽기 실패: $e');
+      return null;
+    }
+  }
 
   static Future<void> setRefreshToken(String token) async {
     await _storage.write(key: 'refresh_token', value: token);

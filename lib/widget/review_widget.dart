@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_language/model/course_model.dart';
-import 'package:sign_language/widget/new_widget/alllist_widget.dart';
-import 'package:sign_language/widget/new_widget/genericquiz_widget.dart';
+import 'package:sign_language/widget/alllist_widget.dart';
+import 'package:sign_language/widget/genericquiz_widget.dart';
 
 class ReviewCard extends StatelessWidget {
   const ReviewCard({super.key});
