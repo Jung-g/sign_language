@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_language/model/course_model.dart';
-import 'package:sign_language/widget/new_widget/genericquiz_widget.dart';
-import 'package:sign_language/widget/new_widget/genericstudy_widget.dart';
-import 'package:sign_language/widget/new_widget/stepdata.dart';
+import 'package:sign_language/widget/genericquiz_widget.dart';
+import 'package:sign_language/widget/genericstudy_widget.dart';
+import 'package:sign_language/widget/stepdata.dart';
 
 class StudyScreen extends StatefulWidget {
   final String course;

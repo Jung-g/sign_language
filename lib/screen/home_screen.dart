@@ -7,9 +7,9 @@ import 'package:sign_language/screen/user_screen.dart';
 import 'package:sign_language/service/calendar_api.dart';
 import 'package:sign_language/service/study_api.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
-import 'package:sign_language/widget/new_widget/coursestepcard_widget.dart';
-import 'package:sign_language/widget/new_widget/review_widget.dart';
-import 'package:sign_language/widget/new_widget/stetscard_widget.dart';
+import 'package:sign_language/widget/coursestepcard_widget.dart';
+import 'package:sign_language/widget/review_widget.dart';
+import 'package:sign_language/widget/stetscard_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
