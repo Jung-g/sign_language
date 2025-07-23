@@ -91,32 +91,15 @@ class StudycourseScreenState extends State<StudycourseScreen> {
                                           courseName,
                                         );
 
-                                    // words와 steps 분리
                                     final words =
                                         List<Map<String, dynamic>>.from(
                                           detail['words'],
                                         );
+                                    final steps =
+                                        List<Map<String, dynamic>>.from(
+                                          detail['steps'],
+                                        );
 
-                                    final seen = <int>{};
-                                    final steps = <Map<String, dynamic>>[];
-                                    for (final word in words) {
-                                      final step = word['step'];
-                                      final stepName = word['step_name'];
-                                      if (step != null &&
-                                          stepName != null &&
-                                          !seen.contains(step)) {
-                                        seen.add(step);
-                                        steps.add({
-                                          'step': step,
-                                          'step_name': stepName,
-                                        });
-                                      }
-                                    }
-                                    steps.sort(
-                                      (a, b) => a['step'].compareTo(b['step']),
-                                    );
-
-                                    // Provider를 통해 상태 저장
                                     context.read<CourseModel>().selectCourse(
                                       course: courseName,
                                       sid: detail['sid'],

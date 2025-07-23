@@ -56,7 +56,7 @@ class _CameraWidgetState extends State<CameraWidget> {
 
       setState(() => isInitialized = true);
 
-      await Future.delayed(Duration(seconds: 5));
+      await Future.delayed(Duration(seconds: 3));
 
       if (controller != null && controller!.value.isRecordingVideo) {
         final file = await controller!.stopVideoRecording();

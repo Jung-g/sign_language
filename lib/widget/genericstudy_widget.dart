@@ -100,6 +100,7 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
         // PageView: 각 아이템 수어 애니메이션 보여주기
         Expanded(
           child: PageView.builder(
+            key: PageStorageKey('study_pageview'), // 현재 페이지 고정용 키
             controller: pageCtrl,
             itemCount: widget.items.length,
             onPageChanged: (idx) {
@@ -168,6 +169,14 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
 
                             if (!mounted) return;
 
+                            if (!isCorrect) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (pageCtrl.hasClients) {
+                                  pageCtrl.jumpToPage(pageIndex);
+                                }
+                              }); // 오답 시 현재 페이지 유지
+                            }
+
                             await showDialog(
                               context: context,
                               builder: (_) => AlertDialog(
@@ -193,18 +202,34 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
                                             : Colors.red,
                                       ),
                                     ),
-                                    if (!isCorrect)
-                                      const Padding(
-                                        padding: EdgeInsets.only(top: 10),
-                                        child: Text(
-                                          '다시 시도해주세요',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ),
+                                    isCorrect
+                                        ? const SizedBox.shrink()
+                                        : const Padding(
+                                            padding: EdgeInsets.only(top: 10),
+                                            child: Text(
+                                              '다시 시도해주세요',
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                          ),
                                   ],
                                 ),
                               ),
                             );
+
+                            // 정답이면 다음 페이지로 자동 이동 또는 학습 완료
+                            if (isCorrect) {
+                              await Future.delayed(
+                                const Duration(milliseconds: 500),
+                              );
+                              if (pageIndex < widget.items.length - 1) {
+                                pageCtrl.nextPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              } else {
+                                await onNext();
+                              }
+                            }
                           },
                         ),
                       )
