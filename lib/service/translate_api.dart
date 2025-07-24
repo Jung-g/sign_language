@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -58,7 +59,7 @@ class TranslateApi {
   }
 
   // 단어 -> 수어
-  static Future<String?> translate_word_to_video(String wordText) async {
+  static Future<List<String>?> translate_word_to_video(String wordText) async {
     final accessToken = await TokenStorage.getAccessToken();
     final refreshToken = await TokenStorage.getRefreshToken();
 
@@ -82,14 +83,17 @@ class TranslateApi {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final videoURL = data['URL'] ?? '';
-        return videoURL;
+        final frameList = (data['frames'] as List<dynamic>)
+            .map((e) => e as String)
+            .toList();
+
+        return frameList;
       } else {
-        print("영상 URL 요청 실패: ${response.statusCode} ${response.body}");
+        debugPrint("프레임 요청 실패: ${response.statusCode} ${response.body}");
         return null;
       }
     } catch (e) {
-      print("영상 URL 요청 중 오류 발생: $e");
+      debugPrint("프레임 요청 중 오류 발생: $e");
       return null;
     }
   }
