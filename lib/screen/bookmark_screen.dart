@@ -28,8 +28,8 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   String? selectedDefinition;
   bool isLoadingDetail = false;
 
+  GlobalKey<AnimationWidgetState>? animationKey;
   List<Uint8List>? animationFrames;
-  final GlobalKey<AnimationWidgetState> animationKey = GlobalKey();
 
   // 초성 인덱스
   final List<String> initials = [
@@ -58,6 +58,8 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   @override
   void initState() {
     super.initState();
+    animationKey = GlobalKey<AnimationWidgetState>();
+    animationFrames = null;
     loadBookmarks();
   }
 
@@ -117,6 +119,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
       setState(() {
         selectedPos = data['pos'];
         selectedDefinition = data['definition'];
+        animationKey = GlobalKey<AnimationWidgetState>();
         animationFrames = decodedFrames;
         isLoadingDetail = false;
       });
@@ -197,7 +200,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                               const SizedBox(height: 8),
                               ElevatedButton.icon(
                                 onPressed: () =>
-                                    animationKey.currentState?.reset(),
+                                    animationKey?.currentState?.reset(),
                                 icon: const Icon(Icons.replay),
                                 label: const Text('다시보기'),
                               ),

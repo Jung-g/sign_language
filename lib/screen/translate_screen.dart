@@ -84,7 +84,7 @@ class TranslateScreenState extends State<TranslateScreen> {
       if (jpeg != null) {
         frameBuffer.add(jpeg);
 
-        if (frameBuffer.length >= 5) {
+        if (frameBuffer.length > 30) {
           await sendFrames(List.from(frameBuffer));
           frameBuffer.clear();
         }
@@ -149,26 +149,35 @@ class TranslateScreenState extends State<TranslateScreen> {
     if (cameraController == null) return;
 
     try {
+      // 스트림 중지 (예외 없이 진행되도록)
       if (cameraController!.value.isStreamingImages) {
+        print("--- 이미지 스트림 중지 시도...");
         await cameraController!.stopImageStream();
-        print("--- 카메라 이미지 스트림 중지됨.");
-      }
-      if (cameraController!.value.isRecordingVideo) {
-        final file = await cameraController!.stopVideoRecording();
-        capturedVideo = file;
-        final size = await File(file.path).length();
-        print("--- 영상 저장됨: ${file.path}, 크기: $size bytes");
+        print("--- 이미지 스트림 중지 완료");
       }
     } catch (e) {
-      print("--- 녹화/스트림 종료 실패: $e");
-      Fluttertoast.showToast(msg: "녹화/스트림 종료 실패: $e");
+      print("--- 이미지 스트림 중지 오류: $e");
     }
 
     try {
-      await cameraController!.dispose();
-      print("--- 카메라 컨트롤러 dispose 됨.");
+      // 영상 녹화 중이라면 정지
+      if (cameraController!.value.isRecordingVideo) {
+        print("--- 영상 녹화 중지 시도...");
+        final file = await cameraController!.stopVideoRecording();
+        capturedVideo = file;
+        print("--- 영상 녹화 완료: ${file.path}");
+      }
     } catch (e) {
-      print("--- 카메라 dispose 중 오류: $e");
+      print("--- 녹화 중지 오류: $e");
+    }
+
+    try {
+      // 컨트롤러 dispose
+      print("--- 컨트롤러 dispose 시작...");
+      await cameraController!.dispose();
+      print("--- 컨트롤러 dispose 완료");
+    } catch (e) {
+      print("--- 컨트롤러 dispose 오류: $e");
     } finally {
       cameraController = null;
     }

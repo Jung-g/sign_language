@@ -38,8 +38,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   String? selectedDefinition;
   bool isLoadingDetail = false;
 
-  final GlobalKey<AnimationWidgetState> animationKey =
-      GlobalKey<AnimationWidgetState>();
+  GlobalKey<AnimationWidgetState>? animationKey;
   List<Uint8List>? animationFrames;
 
   // 초성 인덱스
@@ -70,9 +69,12 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   void initState() {
     super.initState();
     filteredWordList = List.from(widget.words);
+    filteredWordList.sort((a, b) => a.compareTo(b));
     for (var w in widget.words) {
       wordKeys[w] = GlobalKey();
     }
+    animationKey = GlobalKey<AnimationWidgetState>();
+    animationFrames = null;
     loadInitialBookmarks();
   }
 
@@ -156,6 +158,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       setState(() {
         selectedPos = data['pos'];
         selectedDefinition = data['definition'];
+        animationKey = GlobalKey<AnimationWidgetState>();
         animationFrames = decodedFrames;
         isLoadingDetail = false;
       });
@@ -236,7 +239,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                               const SizedBox(height: 8),
                               ElevatedButton.icon(
                                 onPressed: () =>
-                                    animationKey.currentState?.reset(),
+                                    animationKey?.currentState?.reset(),
                                 icon: const Icon(Icons.replay),
                                 label: const Text('다시보기'),
                               ),
