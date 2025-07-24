@@ -37,6 +37,8 @@ class TranslateScreenState extends State<TranslateScreen> {
   String? resultJapanese;
   String? resultChinese;
 
+  final GlobalKey<AnimationWidgetState> animationKey =
+      GlobalKey<AnimationWidgetState>();
   List<Uint8List> decodedFrames = [];
 
   @override
@@ -129,7 +131,7 @@ class TranslateScreenState extends State<TranslateScreen> {
       frontCamera,
       ResolutionPreset.medium,
       enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.yuv420, // JPEG이 아닌 YUV로 유지
+      imageFormatGroup: ImageFormatGroup.yuv420,
     );
 
     try {
@@ -433,12 +435,23 @@ class TranslateScreenState extends State<TranslateScreen> {
                                 const SizedBox(height: 12),
                               ],
                               if (!isSignToKorean && decodedFrames.isNotEmpty)
-                                AspectRatio(
-                                  aspectRatio: 16 / 9,
-                                  child: AnimationWidget(
-                                    key: ValueKey(decodedFrames.hashCode),
-                                    frames: decodedFrames,
-                                  ),
+                                Column(
+                                  children: [
+                                    AspectRatio(
+                                      aspectRatio: 16 / 9,
+                                      child: AnimationWidget(
+                                        key: animationKey,
+                                        frames: decodedFrames,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ElevatedButton.icon(
+                                      onPressed: () =>
+                                          animationKey.currentState?.reset(),
+                                      icon: const Icon(Icons.replay),
+                                      label: const Text('다시보기'),
+                                    ),
+                                  ],
                                 )
                               else if (!isSignToKorean)
                                 const SizedBox(

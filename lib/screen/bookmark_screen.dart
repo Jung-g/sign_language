@@ -1,11 +1,12 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/service/bookmark_api.dart';
 import 'package:sign_language/service/word_detail_api.dart';
+import 'package:sign_language/widget/animation_widget.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/indexbar.dart';
 import 'package:sign_language/widget/word_tile.dart';
-import 'package:video_player/video_player.dart';
 
 class BookmarkScreen extends StatefulWidget {
   const BookmarkScreen({super.key});
@@ -27,8 +28,8 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   String? selectedDefinition;
   bool isLoadingDetail = false;
 
-  VideoPlayerController? controller;
-  late Future<void> initVideoPlayer;
+  List<Uint8List>? animationFrames;
+  final GlobalKey<AnimationWidgetState> animationKey = GlobalKey();
 
   // 초성 인덱스
   final List<String> initials = [
@@ -62,7 +63,6 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
 
   @override
   void dispose() {
-    controller?.dispose();
     super.dispose();
   }
 
@@ -112,24 +112,12 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
 
     try {
       final data = await WordDetailApi.fetch(wid: wid);
-
-      controller =
-          VideoPlayerController.networkUrl(
-              Uri.parse(
-                'http://10.101.170.168/video/${Uri.encodeComponent(word)}.mp4',
-              ),
-            )
-            ..setLooping(true)
-            ..setPlaybackSpeed(1.0);
-
-      initVideoPlayer = controller!.initialize().then((_) {
-        setState(() {});
-        controller!.play();
-      });
+      final decodedFrames = data['frames'] as List<Uint8List>;
 
       setState(() {
         selectedPos = data['pos'];
         selectedDefinition = data['definition'];
+        animationFrames = decodedFrames;
         isLoadingDetail = false;
       });
 
@@ -145,11 +133,11 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
             builder: (context, scrollController) {
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(240),
+                  color: Colors.white.withAlpha(245),
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(24),
                   ),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
                       blurRadius: 12,
@@ -179,7 +167,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            word,
+                            selected ?? '',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -198,78 +186,34 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                       style: const TextStyle(fontSize: 16),
                     ),
                     const SizedBox(height: 12),
-                    FutureBuilder(
-                      future: initVideoPlayer,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done &&
-                            controller!.value.isInitialized) {
-                          return Column(
+                    animationFrames != null && animationFrames!.isNotEmpty
+                        ? Column(
                             children: [
-                              AspectRatio(
-                                aspectRatio: controller!.value.aspectRatio,
-                                child: VideoPlayer(controller!),
+                              AnimationWidget(
+                                key: animationKey,
+                                frames: animationFrames!,
+                                fps: 12.0,
                               ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.replay_10_rounded),
-                                    onPressed: () {
-                                      final pos =
-                                          controller!.value.position -
-                                          const Duration(seconds: 10);
-                                      controller!.seekTo(
-                                        pos < Duration.zero
-                                            ? Duration.zero
-                                            : pos,
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      controller!.value.isPlaying
-                                          ? Icons.pause
-                                          : Icons.play_arrow_rounded,
-                                    ),
-                                    iconSize: 32,
-                                    onPressed: () {
-                                      controller!.value.isPlaying
-                                          ? controller!.pause()
-                                          : controller!.play();
-                                      setState(() {});
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.forward_10_rounded),
-                                    onPressed: () {
-                                      final pos =
-                                          controller!.value.position +
-                                          const Duration(seconds: 10);
-                                      controller!.seekTo(pos);
-                                    },
-                                  ),
-                                ],
+                              const SizedBox(height: 8),
+                              ElevatedButton.icon(
+                                onPressed: () =>
+                                    animationKey.currentState?.reset(),
+                                icon: const Icon(Icons.replay),
+                                label: const Text('다시보기'),
                               ),
                             ],
-                          );
-                        } else {
-                          return const SizedBox(
+                          )
+                        : const SizedBox(
                             height: 150,
                             child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                      },
-                    ),
+                          ),
                   ],
                 ),
               );
             },
           );
         },
-      ).whenComplete(() {
-        controller?.pause();
-        controller?.dispose();
-      });
+      );
     } catch (e) {
       Fluttertoast.showToast(msg: '단어 정보를 불러오는 데 실패했습니다.');
       setState(() => isLoadingDetail = false);

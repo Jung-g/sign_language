@@ -1,9 +1,11 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:sign_language/screen/study_screen.dart';
 import 'package:sign_language/service/study_api.dart';
 import 'package:sign_language/service/translate_api.dart';
+import 'package:sign_language/widget/animation_widget.dart';
 import 'package:sign_language/widget/camera_widget.dart';
-import 'package:video_player/video_player.dart';
 
 class GenericStudyWidget extends StatefulWidget {
   final List<String> items;
@@ -25,29 +27,33 @@ class GenericStudyWidget extends StatefulWidget {
 class GenericStudyWidgetState extends State<GenericStudyWidget> {
   late PageController pageCtrl;
   int pageIndex = 0;
-  VideoPlayerController? videoplayer;
   bool showCamera = false;
   bool isAnalyzing = false;
+  bool isLoading = false;
+  List<Uint8List>? base64Frames;
+  final GlobalKey<AnimationWidgetState> animationKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     pageCtrl = PageController(initialPage: 0);
-    // initVideo();
+    loadAnimationFrames(widget.items[pageIndex]);
   }
 
-  void initVideo() {
-    final item = widget.items[pageIndex];
+  Future<void> loadAnimationFrames(String wordText) async {
+    setState(() {
+      isLoading = true;
+      base64Frames = null;
+    });
 
-    videoplayer?.dispose();
-    videoplayer =
-        VideoPlayerController.networkUrl(
-            Uri.parse(
-              'http://10.101.170.168/video/${Uri.encodeComponent(item)}.mp4',
-            ),
-          )
-          ..setLooping(true)
-          ..setPlaybackSpeed(1.0);
+    final result = await TranslateApi.translate_word_to_video(wordText);
+    if (result != null) {
+      setState(() {
+        base64Frames = result.map((b64) => base64Decode(b64)).toList();
+      });
+    }
+
+    setState(() => isLoading = false);
   }
 
   Future<void> onNext() async {
@@ -75,7 +81,6 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
 
   @override
   void dispose() {
-    videoplayer?.dispose();
     pageCtrl.dispose();
     super.dispose();
   }
@@ -105,7 +110,7 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
             itemCount: widget.items.length,
             onPageChanged: (idx) {
               setState(() => pageIndex = idx);
-              initVideo();
+              loadAnimationFrames(widget.items[idx]);
             },
             itemBuilder: (_, i) {
               final item = widget.items[i];
@@ -127,14 +132,27 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
                       width: size,
                       height: size,
                       color: Colors.black,
-                      child:
-                          videoplayer != null &&
-                              videoplayer!.value.isInitialized
-                          ? AspectRatio(
-                              aspectRatio: videoplayer!.value.aspectRatio,
-                              child: VideoPlayer(videoplayer!),
-                            )
-                          : Center(child: CircularProgressIndicator()),
+                      child: isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : (base64Frames != null
+                                ? Column(
+                                    children: [
+                                      Expanded(
+                                        child: AnimationWidget(
+                                          key: animationKey,
+                                          frames: base64Frames!,
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          animationKey.currentState?.reset();
+                                        },
+                                        icon: Icon(Icons.replay),
+                                        label: Text("다시보기"),
+                                      ),
+                                    ],
+                                  )
+                                : const Center(child: Text("영상 없음"))),
                     ),
                     SizedBox(height: 5),
                     IconButton(
@@ -146,10 +164,6 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
                         width: size,
                         height: size,
                         child: CameraWidget(
-                          // onFinish: (file) {
-                          //   print("녹화된 경로: ${file.path}");
-                          //   setState(() => showCamera = false);
-                          // },
                           onFinish: (file) async {
                             setState(() {
                               isAnalyzing = true;
@@ -171,7 +185,8 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
 
                             if (!isCorrect) {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (pageCtrl.hasClients) {
+                                if (pageCtrl.hasClients &&
+                                    pageCtrl.page?.round() != pageIndex) {
                                   pageCtrl.jumpToPage(pageIndex);
                                 }
                               }); // 오답 시 현재 페이지 유지
