@@ -10,7 +10,6 @@ import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/animation_widget.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:image/image.dart' as img;
-// import 'package:sign_language/widget/camera_widget.dart';
 
 class TranslateScreen extends StatefulWidget {
   const TranslateScreen({super.key});
@@ -101,6 +100,13 @@ class TranslateScreenState extends State<TranslateScreen> {
     setState(() {
       isSignToKorean = !isSignToKorean;
       stopCamera();
+
+      inputController.clear();
+      resultKorean = null;
+      resultEnglish = null;
+      resultJapanese = null;
+      resultChinese = null;
+      decodedFrames = [];
     });
   }
 
@@ -429,7 +435,10 @@ class TranslateScreenState extends State<TranslateScreen> {
                               if (!isSignToKorean && decodedFrames.isNotEmpty)
                                 AspectRatio(
                                   aspectRatio: 16 / 9,
-                                  child: AnimationWidget(frames: decodedFrames),
+                                  child: AnimationWidget(
+                                    key: ValueKey(decodedFrames.hashCode),
+                                    frames: decodedFrames,
+                                  ),
                                 )
                               else if (!isSignToKorean)
                                 const SizedBox(
@@ -468,10 +477,12 @@ class TranslateScreenState extends State<TranslateScreen> {
                       final frameList =
                           await TranslateApi.translate_word_to_video(word);
                       if (frameList != null && frameList.isNotEmpty) {
-                        decodedFrames = frameList
-                            .map((b64) => base64Decode(b64))
-                            .toList();
-                        setState(() => resultKorean = word);
+                        setState(() {
+                          decodedFrames = frameList
+                              .map((b64) => base64Decode(b64))
+                              .toList();
+                          resultKorean = word;
+                        });
                       } else {
                         Fluttertoast.showToast(msg: '수어 애니메이션이 없습니다.');
                       }
