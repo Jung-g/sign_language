@@ -9,7 +9,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/animation_widget.dart';
 import 'package:sign_language/widget/bottom_nav_bar.dart';
-import 'package:video_player/video_player.dart';
 import 'package:image/image.dart' as img;
 // import 'package:sign_language/widget/camera_widget.dart';
 

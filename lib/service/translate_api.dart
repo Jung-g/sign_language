@@ -1,60 +1,46 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 import 'package:sign_language/service/token_storage.dart';
 
 const String baseUrl = 'http://10.101.170.168';
 
 class TranslateApi {
   // 수어 -> 단어
-  static Future<Map<String, String>?> translate_camera_to_word(
-    Uint8List imageBytes,
+  static Future<Map<String, dynamic>> signToText(
+    String videoPath,
+    String expectedWord,
   ) async {
-    final accessToken = await TokenStorage.getAccessToken();
-    final refreshToken = await TokenStorage.getRefreshToken();
-
-    final url = Uri.parse("$baseUrl/translate/sign_to_text");
-
-    final request = http.MultipartRequest("POST", url)
-      ..headers['Authorization'] = 'Bearer $accessToken'
-      ..headers['X-Refresh-Token'] = refreshToken ?? ''
-      ..files.add(
-        http.MultipartFile.fromBytes(
-          'file',
-          imageBytes,
-          filename: 'video.mp4',
-          contentType: MediaType('video', 'mp4'),
-        ),
-      );
-
     try {
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final accessToken = await TokenStorage.getAccessToken();
+      final refreshToken = await TokenStorage.getRefreshToken();
 
-      final newToken = response.headers['x-new-access-token'];
-      if (newToken != null && newToken.isNotEmpty) {
-        await TokenStorage.setAccessToken(newToken);
+      final uri = Uri.parse('$baseUrl/translate/sign_to_text');
+
+      final request = http.MultipartRequest('POST', uri)
+        ..fields['expected_word'] = expectedWord
+        ..files.add(await http.MultipartFile.fromPath('file', videoPath))
+        ..headers.addAll({
+          'Authorization': 'Bearer $accessToken',
+          'X-Refresh-Token': refreshToken ?? '',
+        });
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+
+      final newAccessToken = response.headers['x-new-access-token'];
+      if (newAccessToken != null && newAccessToken.isNotEmpty) {
+        await TokenStorage.setAccessToken(newAccessToken);
       }
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return {
-          'korean': data['korean'],
-          'english': data['english'],
-          'chinese': data['chinese'],
-          'japanese': data['japanese'],
-        };
+        return jsonDecode(response.body);
       } else {
-        // print("번역 실패: ${response.statusCode} ${response.body}");
-        Fluttertoast.showToast(msg: '번역을 실패했습니다.');
-        return null;
+        throw Exception('서버 오류: ${response.body}');
       }
     } catch (e) {
-      Fluttertoast.showToast(msg: '번역 요청을 실패했습니다.');
-      return null;
+      print('signToText 오류: $e');
+      return {"error": true, "message": e.toString()};
     }
   }
 
@@ -179,42 +165,5 @@ class TranslateApi {
     }
 
     return null;
-  }
-
-  static Future<Map<String, dynamic>> signToText(
-    String videoPath,
-    String expectedWord,
-  ) async {
-    try {
-      final accessToken = await TokenStorage.getAccessToken();
-      final refreshToken = await TokenStorage.getRefreshToken();
-
-      final uri = Uri.parse('$baseUrl/translate/sign_to_text');
-
-      final request = http.MultipartRequest('POST', uri)
-        ..fields['expected_word'] = expectedWord
-        ..files.add(await http.MultipartFile.fromPath('file', videoPath))
-        ..headers.addAll({
-          'Authorization': 'Bearer $accessToken',
-          'X-Refresh-Token': refreshToken ?? '',
-        });
-
-      final streamed = await request.send();
-      final response = await http.Response.fromStream(streamed);
-
-      final newAccessToken = response.headers['x-new-access-token'];
-      if (newAccessToken != null && newAccessToken.isNotEmpty) {
-        await TokenStorage.setAccessToken(newAccessToken);
-      }
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception('서버 오류: ${response.body}');
-      }
-    } catch (e) {
-      print('signToText 오류: $e');
-      return {"error": true, "message": e.toString()};
-    }
   }
 }
