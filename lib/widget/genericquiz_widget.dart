@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_language/model/course_model.dart';
+import 'package:sign_language/service/animation_api.dart';
 import 'package:sign_language/service/study_api.dart';
-import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/animation_widget.dart';
 
 class GenericQuizWidget extends StatefulWidget {
@@ -65,7 +65,7 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
       base64Frames = null;
     });
 
-    final result = await TranslateApi.translate_word_to_video(correct);
+    final result = await AnimationApi.loadAnimation(correct);
     if (!mounted) return;
 
     if (result != null) {

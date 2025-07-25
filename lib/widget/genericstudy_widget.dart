@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:sign_language/screen/study_screen.dart';
+import 'package:sign_language/service/animation_api.dart';
 import 'package:sign_language/service/study_api.dart';
 import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/animation_widget.dart';
@@ -46,7 +47,7 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
       base64Frames = null;
     });
 
-    final result = await TranslateApi.translate_word_to_video(wordText);
+    final result = await AnimationApi.loadAnimation(wordText);
     if (result != null) {
       setState(() {
         base64Frames = result.map((b64) => base64Decode(b64)).toList();
