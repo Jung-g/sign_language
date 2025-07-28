@@ -151,11 +151,18 @@ class TranslateApi {
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
+        print("decoded.runtimeType: ${result.runtimeType}");
+        // return {
+        //   'korean': result['korean'],
+        //   'english': result['english'],
+        //   'japanese': result['japanese'],
+        //   'chinese': result['chinese'],
+        // };
         return {
           'korean': result['korean'],
-          'english': result['english'],
-          'japanese': result['japanese'],
-          'chinese': result['chinese'],
+          'english': result['english']['text'] ?? '',
+          'japanese': result['japanese']['text'] ?? '',
+          'chinese': result['chinese']['text'] ?? '',
         };
       } else {
         print("번역 실패: ${response.statusCode}");
