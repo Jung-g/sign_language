@@ -83,7 +83,7 @@ class TranslateScreenState extends State<TranslateScreen> {
       if (jpeg != null) {
         frameBuffer.add(jpeg);
 
-        if (frameBuffer.length > 30) {
+        if (frameBuffer.length >= 45) {
           await sendFrames(List.from(frameBuffer));
           frameBuffer.clear();
         }
