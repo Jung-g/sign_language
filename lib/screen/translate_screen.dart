@@ -57,7 +57,7 @@ class TranslateScreenState extends State<TranslateScreen> {
   }
 
   Future<void> sendFrames(List<Uint8List> frames) async {
-    print("--- 프레임 ${frames.length}개 서버로 전송 시도...");
+    print("프레임 ${frames.length}개 서버로 전송 시도...");
     final List<String> base64Frames = frames
         .map((frame) => base64Encode(frame))
         .toList();
@@ -65,12 +65,12 @@ class TranslateScreenState extends State<TranslateScreen> {
     try {
       final result = await TranslateApi.sendFrames(base64Frames);
       if (result != null) {
-        print("--- 서버 응답 성공: $result");
+        print("서버 응답 성공: $result");
       } else {
-        print("--- 서버 응답 실패: result is null");
+        print("서버 응답 실패: result is null");
       }
     } catch (e) {
-      print("--- 프레임 전송 중 오류 발생: $e");
+      print("프레임 전송 중 오류 발생: $e");
     }
   }
 
@@ -88,10 +88,10 @@ class TranslateScreenState extends State<TranslateScreen> {
           frameBuffer.clear();
         }
       } else {
-        print("--- JPEG 변환 실패: convertYUV420toJPEG에서 null 반환");
+        print("JPEG 변환 실패: convertYUV420toJPEG에서 null 반환");
       }
     } catch (e) {
-      print("--- 프레임 처리 오류 (YUV->JPEG): $e");
+      print("프레임 처리 오류 (YUV->JPEG): $e");
     } finally {
       isProcessingFrame = false;
     }
@@ -137,9 +137,9 @@ class TranslateScreenState extends State<TranslateScreen> {
       await cameraController!.initialize();
       await cameraController!.startImageStream(onFrameAvailable);
       setState(() => isCameraOn = true);
-      print("--- 카메라 스트림 시작됨.");
+      print("카메라 스트림 시작됨.");
     } catch (e) {
-      print("--- 카메라 시작 실패: $e");
+      print("카메라 시작 실패: $e");
       Fluttertoast.showToast(msg: "카메라 시작 실패: $e");
     }
   }
@@ -147,36 +147,35 @@ class TranslateScreenState extends State<TranslateScreen> {
   Future<void> stopCamera() async {
     if (cameraController == null) return;
 
+    print("카메라 중지 요청 수신");
+
     try {
-      // 스트림 중지 (예외 없이 진행되도록)
       if (cameraController!.value.isStreamingImages) {
-        print("--- 이미지 스트림 중지 시도...");
+        print("이미지 스트림 중지 시도...");
         await cameraController!.stopImageStream();
-        print("--- 이미지 스트림 중지 완료");
+        print("이미지 스트림 중지 완료");
       }
     } catch (e) {
-      print("--- 이미지 스트림 중지 오류: $e");
+      print("이미지 스트림 중지 오류: $e");
     }
 
-    try {
-      // 영상 녹화 중이라면 정지
-      if (cameraController!.value.isRecordingVideo) {
-        print("--- 영상 녹화 중지 시도...");
-        final file = await cameraController!.stopVideoRecording();
-        capturedVideo = file;
-        print("--- 영상 녹화 완료: ${file.path}");
+    if (frameBuffer.isNotEmpty) {
+      try {
+        print("잔여 프레임 ${frameBuffer.length}개 서버에 전송 중...");
+        await sendFrames(List.from(frameBuffer));
+        frameBuffer.clear();
+      } catch (e) {
+        print("잔여 프레임 전송 실패: $e");
       }
-    } catch (e) {
-      print("--- 녹화 중지 오류: $e");
     }
 
+    await Future.delayed(Duration(milliseconds: 300));
+
     try {
-      // 컨트롤러 dispose
-      print("--- 컨트롤러 dispose 시작...");
       await cameraController!.dispose();
-      print("--- 컨트롤러 dispose 완료");
+      print("컨트롤러 dispose 완료");
     } catch (e) {
-      print("--- 컨트롤러 dispose 오류: $e");
+      print("컨트롤러 dispose 오류: $e");
     } finally {
       cameraController = null;
     }
@@ -188,54 +187,140 @@ class TranslateScreenState extends State<TranslateScreen> {
     }
   }
 
+  // Future<Uint8List?> convertYUV420toJPEG(CameraImage image) async {
+  //   try {
+  //     final width = image.width;
+  //     final height = image.height;
+  //     final img.Image imgData = img.Image(width: width, height: height);
+
+  //     final planeY = image.planes[0];
+  //     final planeU = image.planes[1];
+  //     final planeV = image.planes[2];
+
+  //     final bytesY = planeY.bytes;
+  //     final bytesU = planeU.bytes;
+  //     final bytesV = planeV.bytes;
+
+  //     final int rowStrideY = planeY.bytesPerRow;
+  //     final int rowStrideU = planeU.bytesPerRow;
+  //     final int rowStrideV = planeV.bytesPerRow;
+
+  //     final int pixelStrideU = planeU.bytesPerPixel ?? 1;
+  //     final int pixelStrideV = planeV.bytesPerPixel ?? 1;
+
+  //     for (int y = 0; y < height; y++) {
+  //       for (int x = 0; x < width; x++) {
+  //         final int uvIndex = (y ~/ 2) * rowStrideU + (x ~/ 2) * pixelStrideU;
+  //         final int yIndex = y * rowStrideY + x;
+
+  //         final yp = bytesY[yIndex];
+  //         final up = bytesU[uvIndex];
+  //         final vp = bytesV[uvIndex];
+
+  //         int r = (yp + 1.402 * (vp - 128)).round();
+  //         int g = (yp - 0.344136 * (up - 128) - 0.714136 * (vp - 128)).round();
+  //         int b = (yp + 1.772 * (up - 128)).round();
+
+  //         imgData.setPixelRgb(
+  //           x,
+  //           y,
+  //           r.clamp(0, 255),
+  //           g.clamp(0, 255),
+  //           b.clamp(0, 255),
+  //         );
+  //       }
+  //     }
+
+  //     final encodedBytes = img.encodeJpg(imgData, quality: 80);
+  //     return Uint8List.fromList(encodedBytes);
+  //   } catch (e) {
+  //     debugPrint("convertYUV420toJPEG 오류: $e");
+  //     return null;
+  //   }
+  // }
+
   Future<Uint8List?> convertYUV420toJPEG(CameraImage image) async {
     try {
-      final width = image.width;
-      final height = image.height;
-
-      final img.Image imgData = img.Image(width: width, height: height);
+      final int width = image.width;
+      final int height = image.height;
 
       final planeY = image.planes[0];
       final planeU = image.planes[1];
       final planeV = image.planes[2];
 
-      final bytesY = planeY.bytes;
-      final bytesU = planeU.bytes;
-      final bytesV = planeV.bytes;
+      final Uint8List bytesY = planeY.bytes;
+      final Uint8List bytesU = planeU.bytes;
+      final Uint8List bytesV = planeV.bytes;
 
-      final int rowStrideY = planeY.bytesPerRow;
-      final int rowStrideU = planeU.bytesPerRow;
-      final int rowStrideV = planeV.bytesPerRow;
+      final int yStride = planeY.bytesPerRow;
+      final int uStride = planeU.bytesPerRow;
       final int pixelStrideU = planeU.bytesPerPixel ?? 1;
-      final int pixelStrideV = planeV.bytesPerPixel ?? 1;
+
+      String format = 'UNKNOWN';
+      final int uvHeight = planeU.bytes.length ~/ uStride;
+
+      final int yHeight = height;
+      final int yWidth = width;
+
+      final int uWidthGuess = uStride ~/ (planeU.bytesPerPixel ?? 1);
+      final int uHeightGuess = planeU.bytes.length ~/ uStride;
+
+      if ((uWidthGuess - yWidth).abs() <= 32 &&
+          (uHeightGuess - yHeight).abs() <= 2) {
+        format = 'YUV444';
+      } else if ((uWidthGuess - yWidth ~/ 2).abs() <= 32 &&
+          (uHeightGuess - yHeight).abs() <= 2) {
+        format = 'YUV422';
+      } else if ((uWidthGuess - yWidth ~/ 2).abs() <= 32 &&
+          (uHeightGuess - yHeight ~/ 2).abs() <= 2) {
+        format = 'YUV420';
+      } else {
+        print("Unknown YUV format");
+        print(
+          "→ uStride: $uStride, uHeightGuess: $uHeightGuess, pixelStrideU: $pixelStrideU",
+        );
+        return null;
+      }
+
+      final img.Image output = img.Image(width: width, height: height);
 
       for (int y = 0; y < height; y++) {
+        final int yRow = y * yStride;
+        final int uvY = (format == 'YUV420')
+            ? y ~/ 2
+            : (format == 'YUV422')
+            ? y
+            : y;
+
         for (int x = 0; x < width; x++) {
-          final int uvIndex = (y ~/ 2) * rowStrideU + (x ~/ 2) * pixelStrideU;
-          final int yIndex = y * rowStrideY + x;
+          final int yIndex = yRow + x;
 
-          final yp = bytesY[yIndex];
-          final up = bytesU[uvIndex];
-          final vp = bytesV[uvIndex];
+          final int uvX = (format == 'YUV444') ? x : x ~/ 2;
+          final int uvIndex = uvY * uStride + uvX * pixelStrideU;
 
-          int r = (yp + 1.402 * (vp - 128)).round();
-          int g = (yp - 0.344136 * (up - 128) - 0.714136 * (vp - 128)).round();
-          int b = (yp + 1.772 * (up - 128)).round();
+          final int Y = bytesY[yIndex];
+          final int U = bytesU[uvIndex] - 128;
+          final int V = bytesV[uvIndex] - 128;
 
-          imgData.setPixelRgb(
+          // TTA 기반 변환 공식
+          int R = (Y + 0.956 * U + 0.621 * V).round();
+          int G = (Y - 0.272 * U - 0.647 * V).round();
+          int B = (Y + 1.106 * U + 1.703 * V).round();
+
+          output.setPixelRgb(
             x,
             y,
-            r.clamp(0, 255),
-            g.clamp(0, 255),
-            b.clamp(0, 255),
+            R.clamp(0, 255),
+            G.clamp(0, 255),
+            B.clamp(0, 255),
           );
         }
       }
 
-      final encodedBytes = img.encodeJpg(imgData, quality: 80);
-      return Uint8List.fromList(encodedBytes);
+      final encoded = img.encodeJpg(output, quality: 80);
+      return Uint8List.fromList(encoded);
     } catch (e) {
-      print("--- convertYUV420toJPEG 오류: $e");
+      debugPrint("변환 오류: $e");
       return null;
     }
   }
