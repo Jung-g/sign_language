@@ -28,7 +28,8 @@ class TranslateScreenState extends State<TranslateScreen> {
   final TextEditingController inputController = TextEditingController();
 
   // 콤보박스
-  final List<String> langs = ['한국어', 'English', '日本語', '中文'];
+  // final List<String> langs = ['한국어', 'English', '日本語', '中文'];
+  final List<String> langs = ['한국어', '영어', '일본어', '중국어'];
   String selectedLang = '한국어';
 
   String? resultKorean;
@@ -61,7 +62,7 @@ class TranslateScreenState extends State<TranslateScreen> {
     final List<String> base64Frames = frames
         .map((frame) => base64Encode(frame))
         .toList();
-
+    print(base64Frames);
     try {
       final result = await TranslateApi.sendFrames(base64Frames);
       if (result != null) {
@@ -508,23 +509,46 @@ class TranslateScreenState extends State<TranslateScreen> {
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // if (isSignToKorean && resultKorean != null) ...[
+                              //   Text(
+                              //     '한글: $resultKorean',
+                              //     style: TextStyle(fontSize: 16),
+                              //   ),
+                              //   Text(
+                              //     '영어: $resultEnglish',
+                              //     style: TextStyle(fontSize: 16),
+                              //   ),
+                              //   Text(
+                              //     '일본어: $resultJapanese',
+                              //     style: TextStyle(fontSize: 16),
+                              //   ),
+                              //   Text(
+                              //     '중국어: $resultChinese',
+                              //     style: TextStyle(fontSize: 16),
+                              //   ),
+                              //   const SizedBox(height: 12),
+                              // ],
                               if (isSignToKorean && resultKorean != null) ...[
-                                Text(
-                                  '한글: $resultKorean',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                                Text(
-                                  '영어: $resultEnglish',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                                Text(
-                                  '일본어: $resultJapanese',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                                Text(
-                                  '중국어: $resultChinese',
-                                  style: TextStyle(fontSize: 16),
-                                ),
+                                if (selectedLang == '한국어')
+                                  Text(
+                                    '$resultKorean',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                if (selectedLang == '영어')
+                                  Text(
+                                    '$resultEnglish',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                if (selectedLang == '일본어')
+                                  Text(
+                                    '$resultJapanese',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                if (selectedLang == '중국어')
+                                  Text(
+                                    '$resultChinese',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
                                 const SizedBox(height: 12),
                               ],
                               if (!isSignToKorean && decodedFrames.isNotEmpty)
@@ -565,7 +589,9 @@ class TranslateScreenState extends State<TranslateScreen> {
                       final result = await TranslateApi.translateLatest();
                       if (result != null) {
                         setState(() {
-                          resultKorean = result['korean'];
+                          resultKorean = result['korean'] is List
+                              ? (result['korean'] as List).join(' ')
+                              : result['korean']?.toString();
                           resultEnglish = result['english'];
                           resultJapanese = result['japanese'];
                           resultChinese = result['chinese'];
