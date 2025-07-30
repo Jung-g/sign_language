@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:sign_language/model/course_model.dart';
 import 'package:sign_language/widget/alllist_widget.dart';
 import 'package:sign_language/widget/genericquiz_widget.dart';
+import 'package:sign_language/widget/neumorphism.dart';
 
 class ReviewCard extends StatelessWidget {
   const ReviewCard({super.key});
@@ -33,13 +34,16 @@ class ReviewCard extends StatelessWidget {
 
     final previewEntries = courseWordsMap.entries.take(5).toList();
 
-    return Container(
-      width: double.infinity,
+    // return Container(
+    //   width: double.infinity,
+    //   padding: const EdgeInsets.all(16),
+    //   decoration: BoxDecoration(
+    //     color: Colors.orange.shade50,
+    //     borderRadius: BorderRadius.circular(20),
+    //   ),
+    return Neumorphism(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(20),
-      ),
+      width: double.infinity,
       child: Column(
         children: [
           for (final entry in previewEntries)

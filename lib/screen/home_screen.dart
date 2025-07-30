@@ -174,7 +174,7 @@ class HomeScreenState extends State<HomeScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
                 Flexible(
                   flex: 1,
                   child: Padding(
@@ -184,7 +184,6 @@ class HomeScreenState extends State<HomeScreen> {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.purple[50],
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Column(
@@ -199,7 +198,6 @@ class HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
                 Flexible(
                   flex: 2,
                   child: Padding(
@@ -209,7 +207,6 @@ class HomeScreenState extends State<HomeScreen> {
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.orange[50],
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: ReviewCard(),
@@ -219,7 +216,7 @@ class HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 10),
               ],
             ),
-      bottomNavigationBar: const BottomNavBar(),
+      // bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

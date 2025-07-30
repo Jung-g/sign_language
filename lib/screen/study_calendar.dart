@@ -143,7 +143,7 @@ class _StudyCalendarState extends State<StudyCalendar> {
           ),
         ],
       ),
-      bottomNavigationBar: const BottomNavBar(),
+      // bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

@@ -627,7 +627,7 @@ class TranslateScreenState extends State<TranslateScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBar(),
+      // bottomNavigationBar: BottomNavBar(),
     );
   }
 }

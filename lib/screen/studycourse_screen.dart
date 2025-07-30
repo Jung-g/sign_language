@@ -128,7 +128,7 @@ class StudycourseScreenState extends State<StudycourseScreen> {
                 ],
               ),
       ),
-      bottomNavigationBar: const BottomNavBar(),
+      // bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

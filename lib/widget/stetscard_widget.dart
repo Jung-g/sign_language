@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sign_language/widget/neumorphism.dart';
 
 class StetscardWidget extends StatelessWidget {
   final int learnedWords; // 학습한 단어 수
@@ -16,12 +17,15 @@ class StetscardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final percent = overallPercent;
 
-    return Container(
+    // return Container(
+    //   padding: const EdgeInsets.all(16),
+    //   decoration: BoxDecoration(
+    //     color: Colors.purple.shade50,
+    //     borderRadius: BorderRadius.circular(20),
+    //   ),
+    return Neumorphism(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.purple.shade50,
-        borderRadius: BorderRadius.circular(20),
-      ),
+      width: double.infinity,
       child: Row(
         children: [
           // 진행률 원형 차트

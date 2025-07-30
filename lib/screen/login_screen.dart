@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/screen/home_screen.dart';
+import 'package:sign_language/screen/main_screen.dart';
 import 'package:sign_language/widget/menu_button.dart';
 import 'package:sign_language/widget/textBox.dart';
 import 'package:sign_language/screen/insertuser_screen.dart';
@@ -85,7 +86,7 @@ class LoginScreenState extends State<LoginScreen> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => HomeScreen(),
+                                  builder: (context) => MainScreen(),
                                 ),
                               );
                             } else {

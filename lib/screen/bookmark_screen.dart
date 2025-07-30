@@ -354,7 +354,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: const BottomNavBar(),
+      // bottomNavigationBar: const BottomNavBar(),
     );
   }
 }
