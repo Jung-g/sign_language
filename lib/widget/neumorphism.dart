@@ -16,7 +16,7 @@ class Neumorphism extends StatelessWidget {
     this.borderRadius = 20.0,
     this.blur = 10.0,
     this.offset = const Offset(6, 6),
-    this.backgroundColor = const Color.fromARGB(255, 255, 247, 247),
+    this.backgroundColor = const Color.fromARGB(255, 254, 241, 255),
     this.padding = const EdgeInsets.all(16),
     this.height,
     this.width,

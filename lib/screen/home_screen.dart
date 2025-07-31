@@ -186,18 +186,15 @@ class HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Column(
-                        children: [
-                          StetscardWidget(
-                            learnedWords: learnedWordsCount,
-                            streakDays: streakDays,
-                            overallPercent: overallPercent,
-                          ),
-                        ],
+                      child: StetscardWidget(
+                        learnedWords: learnedWordsCount,
+                        streakDays: streakDays,
+                        overallPercent: overallPercent,
                       ),
                     ),
                   ),
                 ),
+                const SizedBox(height: 20),
                 Flexible(
                   flex: 2,
                   child: Padding(
