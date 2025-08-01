@@ -28,7 +28,6 @@ class TranslateScreenState extends State<TranslateScreen> {
   final TextEditingController inputController = TextEditingController();
 
   // 콤보박스
-  // final List<String> langs = ['한국어', 'English', '日本語', '中文'];
   final List<String> langs = ['한국어', '영어', '일본어', '중국어'];
   String selectedLang = '한국어';
 
@@ -84,7 +83,7 @@ class TranslateScreenState extends State<TranslateScreen> {
       if (jpeg != null) {
         frameBuffer.add(jpeg);
 
-        if (frameBuffer.length >= 45) {
+        if (frameBuffer.length >= 10) {
           await sendFrames(List.from(frameBuffer));
           frameBuffer.clear();
         }
@@ -129,7 +128,8 @@ class TranslateScreenState extends State<TranslateScreen> {
 
     cameraController = CameraController(
       frontCamera,
-      ResolutionPreset.medium,
+      // ResolutionPreset.medium,
+      ResolutionPreset.low,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.yuv420,
     );
@@ -431,7 +431,8 @@ class TranslateScreenState extends State<TranslateScreen> {
                     height: 330,
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
+                      // border: Border.all(color: Colors.black),
+                      color: Color.fromARGB(255, 238, 229, 255),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Stack(
@@ -500,7 +501,8 @@ class TranslateScreenState extends State<TranslateScreen> {
                     height: 330,
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
+                      // border: Border.all(color: Colors.black),
+                      color: Color.fromARGB(255, 238, 229, 255),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.topLeft,
