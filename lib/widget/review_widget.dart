@@ -11,7 +11,7 @@ class ReviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final courseModel = context.watch<CourseModel>();
-    final courseWordsMap = courseModel.getCompletedCourseStep5Words();
+    final courseWordsMap = courseModel.reviewableStep5Words;
 
     final ButtonStyle buttonStyle = ElevatedButton.styleFrom(
       backgroundColor: Colors.white,

@@ -5,7 +5,6 @@ import 'package:sign_language/screen/login_screen.dart';
 import 'package:sign_language/screen/update_user_screen.dart';
 import 'package:sign_language/service/logout_api.dart';
 import 'package:sign_language/service/token_storage.dart';
-import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/menu_button.dart';
 
 class UserScreen extends StatefulWidget {

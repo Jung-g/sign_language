@@ -7,7 +7,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/animation_widget.dart';
-import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:image/image.dart' as img;
 
 class TranslateScreen extends StatefulWidget {
@@ -83,7 +82,7 @@ class TranslateScreenState extends State<TranslateScreen> {
       if (jpeg != null) {
         frameBuffer.add(jpeg);
 
-        if (frameBuffer.length >= 10) {
+        if (frameBuffer.length >= 45) {
           await sendFrames(List.from(frameBuffer));
           frameBuffer.clear();
         }
@@ -128,8 +127,8 @@ class TranslateScreenState extends State<TranslateScreen> {
 
     cameraController = CameraController(
       frontCamera,
-      // ResolutionPreset.medium,
-      ResolutionPreset.low,
+      ResolutionPreset.medium,
+      // ResolutionPreset.low,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.yuv420,
     );
@@ -188,126 +187,75 @@ class TranslateScreenState extends State<TranslateScreen> {
     }
   }
 
-  // Future<Uint8List?> convertYUV420toJPEG(CameraImage image) async {
-  //   try {
-  //     final width = image.width;
-  //     final height = image.height;
-  //     final img.Image imgData = img.Image(width: width, height: height);
-
-  //     final planeY = image.planes[0];
-  //     final planeU = image.planes[1];
-  //     final planeV = image.planes[2];
-
-  //     final bytesY = planeY.bytes;
-  //     final bytesU = planeU.bytes;
-  //     final bytesV = planeV.bytes;
-
-  //     final int rowStrideY = planeY.bytesPerRow;
-  //     final int rowStrideU = planeU.bytesPerRow;
-  //     final int rowStrideV = planeV.bytesPerRow;
-
-  //     final int pixelStrideU = planeU.bytesPerPixel ?? 1;
-  //     final int pixelStrideV = planeV.bytesPerPixel ?? 1;
-
-  //     for (int y = 0; y < height; y++) {
-  //       for (int x = 0; x < width; x++) {
-  //         final int uvIndex = (y ~/ 2) * rowStrideU + (x ~/ 2) * pixelStrideU;
-  //         final int yIndex = y * rowStrideY + x;
-
-  //         final yp = bytesY[yIndex];
-  //         final up = bytesU[uvIndex];
-  //         final vp = bytesV[uvIndex];
-
-  //         int r = (yp + 1.402 * (vp - 128)).round();
-  //         int g = (yp - 0.344136 * (up - 128) - 0.714136 * (vp - 128)).round();
-  //         int b = (yp + 1.772 * (up - 128)).round();
-
-  //         imgData.setPixelRgb(
-  //           x,
-  //           y,
-  //           r.clamp(0, 255),
-  //           g.clamp(0, 255),
-  //           b.clamp(0, 255),
-  //         );
-  //       }
-  //     }
-
-  //     final encodedBytes = img.encodeJpg(imgData, quality: 80);
-  //     return Uint8List.fromList(encodedBytes);
-  //   } catch (e) {
-  //     debugPrint("convertYUV420toJPEG 오류: $e");
-  //     return null;
-  //   }
-  // }
-
   Future<Uint8List?> convertYUV420toJPEG(CameraImage image) async {
     try {
+      // 카메라에서 들어온 이미지의 너비, 높이
       final int width = image.width;
       final int height = image.height;
 
+      // Y, U, V 평면 정보
       final planeY = image.planes[0];
       final planeU = image.planes[1];
       final planeV = image.planes[2];
 
+      // 각 평면의 바이트 데이터 추출
       final Uint8List bytesY = planeY.bytes;
       final Uint8List bytesU = planeU.bytes;
       final Uint8List bytesV = planeV.bytes;
 
+      // 각 평면의 스트라이드 정보
       final int yStride = planeY.bytesPerRow;
       final int uStride = planeU.bytesPerRow;
       final int pixelStrideU = planeU.bytesPerPixel ?? 1;
 
-      String format = 'UNKNOWN';
-      final int uvHeight = planeU.bytes.length ~/ uStride;
+      // 포맷 추정용 변수
+      String format = 'YUV420'; // 기본값
 
-      final int yHeight = height;
-      final int yWidth = width;
+      final int uWidthGuess = uStride ~/ pixelStrideU;
+      final int uHeightGuess = bytesU.length ~/ uStride;
 
-      final int uWidthGuess = uStride ~/ (planeU.bytesPerPixel ?? 1);
-      final int uHeightGuess = planeU.bytes.length ~/ uStride;
-
-      if ((uWidthGuess - yWidth).abs() <= 32 &&
-          (uHeightGuess - yHeight).abs() <= 2) {
+      if ((uWidthGuess - width).abs() <= 32 &&
+          (uHeightGuess - height).abs() <= 2) {
         format = 'YUV444';
-      } else if ((uWidthGuess - yWidth ~/ 2).abs() <= 32 &&
-          (uHeightGuess - yHeight).abs() <= 2) {
+      } else if ((uWidthGuess - width ~/ 2).abs() <= 32 &&
+          (uHeightGuess - height).abs() <= 2) {
         format = 'YUV422';
-      } else if ((uWidthGuess - yWidth ~/ 2).abs() <= 32 &&
-          (uHeightGuess - yHeight ~/ 2).abs() <= 2) {
+      } else if ((uWidthGuess - width ~/ 2).abs() <= 32 &&
+          (uHeightGuess - height ~/ 2).abs() <= 2) {
         format = 'YUV420';
       } else {
         print("Unknown YUV format");
-        print(
-          "→ uStride: $uStride, uHeightGuess: $uHeightGuess, pixelStrideU: $pixelStrideU",
-        );
         return null;
       }
 
+      // 이미지 버퍼 생성
       final img.Image output = img.Image(width: width, height: height);
 
+      // 모든 픽셀 순회
       for (int y = 0; y < height; y++) {
         final int yRow = y * yStride;
-        final int uvY = (format == 'YUV420')
-            ? y ~/ 2
-            : (format == 'YUV422')
-            ? y
-            : y;
+
+        // YUV 포맷에 따라 U, V의 Y 좌표 결정
+        final int uvY = (format == 'YUV420') ? y ~/ 2 : y;
 
         for (int x = 0; x < width; x++) {
           final int yIndex = yRow + x;
 
+          // YUV 포맷에 따라 U, V의 X 좌표 결정
           final int uvX = (format == 'YUV444') ? x : x ~/ 2;
           final int uvIndex = uvY * uStride + uvX * pixelStrideU;
 
+          // 밝기 및 색차 추출
           final int Y = bytesY[yIndex];
           final int U = bytesU[uvIndex] - 128;
           final int V = bytesV[uvIndex] - 128;
 
-          // TTA 기반 변환 공식
-          int R = (Y + 0.956 * U + 0.621 * V).round();
-          int G = (Y - 0.272 * U - 0.647 * V).round();
-          int B = (Y + 1.106 * U + 1.703 * V).round();
+          final double yAdjusted = (Y - 16) * 1.164;
+          int R = (yAdjusted + 1.596 * V).round();
+          int G = (yAdjusted - 0.813 * V - 0.391 * U).round();
+          int B = (yAdjusted + 2.018 * U).round();
 
+          // RGB 값을 범위 [0, 255]로 클램핑 후 픽셀 설정
           output.setPixelRgb(
             x,
             y,
@@ -318,7 +266,8 @@ class TranslateScreenState extends State<TranslateScreen> {
         }
       }
 
-      final encoded = img.encodeJpg(output, quality: 80);
+      // JPEG 인코딩
+      final encoded = img.encodeJpg(output, quality: 100);
       return Uint8List.fromList(encoded);
     } catch (e) {
       debugPrint("변환 오류: $e");
@@ -432,7 +381,7 @@ class TranslateScreenState extends State<TranslateScreen> {
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       // border: Border.all(color: Colors.black),
-                      color: Color.fromARGB(255, 238, 229, 255),
+                      color: Color.fromARGB(255, 244, 237, 255),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Stack(
@@ -502,7 +451,7 @@ class TranslateScreenState extends State<TranslateScreen> {
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       // border: Border.all(color: Colors.black),
-                      color: Color.fromARGB(255, 238, 229, 255),
+                      color: Color.fromARGB(255, 244, 237, 255),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.topLeft,
@@ -511,25 +460,6 @@ class TranslateScreenState extends State<TranslateScreen> {
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // if (isSignToKorean && resultKorean != null) ...[
-                              //   Text(
-                              //     '한글: $resultKorean',
-                              //     style: TextStyle(fontSize: 16),
-                              //   ),
-                              //   Text(
-                              //     '영어: $resultEnglish',
-                              //     style: TextStyle(fontSize: 16),
-                              //   ),
-                              //   Text(
-                              //     '일본어: $resultJapanese',
-                              //     style: TextStyle(fontSize: 16),
-                              //   ),
-                              //   Text(
-                              //     '중국어: $resultChinese',
-                              //     style: TextStyle(fontSize: 16),
-                              //   ),
-                              //   const SizedBox(height: 12),
-                              // ],
                               if (isSignToKorean && resultKorean != null) ...[
                                 if (selectedLang == '한국어')
                                   Text(

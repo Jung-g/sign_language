@@ -6,7 +6,6 @@ import 'package:sign_language/screen/study_screen.dart';
 import 'package:sign_language/screen/user_screen.dart';
 import 'package:sign_language/service/calendar_api.dart';
 import 'package:sign_language/service/study_api.dart';
-import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/coursestepcard_widget.dart';
 import 'package:sign_language/widget/review_widget.dart';
 import 'package:sign_language/widget/stetscard_widget.dart';
@@ -32,6 +31,7 @@ class HomeScreenState extends State<HomeScreen> {
     super.initState();
     loadStudyStats();
     context.read<CourseModel>().debugWords();
+    context.read<CourseModel>().loadReviewableStep5Words();
   }
 
   Future<void> loadStudyStats() async {

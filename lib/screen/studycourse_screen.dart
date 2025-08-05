@@ -3,7 +3,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_language/model/course_model.dart';
 import 'package:sign_language/service/study_api.dart';
-import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/choice_widget.dart';
 import 'package:sign_language/widget/menu_button.dart';
 

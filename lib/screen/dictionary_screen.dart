@@ -1,11 +1,9 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:sign_language/service/bookmark_api.dart';
 import 'package:sign_language/service/word_detail_api.dart';
 import 'package:sign_language/widget/animation_widget.dart';
-import 'package:sign_language/widget/bottom_nav_bar.dart';
 import 'package:sign_language/widget/indexbar.dart';
 import 'package:sign_language/widget/word_tile.dart';
 
