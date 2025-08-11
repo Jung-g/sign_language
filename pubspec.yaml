@@ -34,10 +34,12 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  opencv_dart: ^1.4.3
+
   ffi: ^2.1.4
   ffigen: ^19.1.0
   
-# flutter_localization: ^0.3.3
+  # flutter_localization: ^0.3.3
   table_calendar: ^3.2.0  
   flutter_screenutil: ^5.9.3
   responsive_builder: ^0.7.1

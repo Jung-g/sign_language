@@ -90,7 +90,9 @@ class TranslateApi {
     }
   }
 
-  static Future<String?> sendFrames(List<String> base64Frames) async {
+  static Future<Map<String, dynamic>?> sendFrames(
+    List<String> base64Frames,
+  ) async {
     final accessToken = await TokenStorage.getAccessToken();
     final refreshToken = await TokenStorage.getRefreshToken();
 
@@ -124,8 +126,13 @@ class TranslateApi {
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
-        debugPrint("서버 프레임 분석 성공: ${result['status']}");
-        return result['status'];
+        debugPrint("서버 프레임 분석 성공: ${result['korean']}");
+        return {
+          'korean': result['korean'],
+          'english': result['english']['text'] ?? '',
+          'japanese': result['japanese']['text'] ?? '',
+          'chinese': result['chinese']['text'] ?? '',
+        };
       } else {
         debugPrint("서버 프레임 분석 실패: Status ${response.statusCode}");
         debugPrint("서버 응답 본문: ${response.body}");

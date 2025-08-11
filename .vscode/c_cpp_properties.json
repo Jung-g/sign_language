@@ -4,8 +4,6 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                // OpenCV 헤더
-                "${workspaceFolder}/android/app/src/main/cpp/opencv/sdk/native/jni/include",
 
                 // NDK r27: jni.h 등
                 "C:/Users/wjdrm/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include",
@@ -21,12 +19,12 @@
                 "__ANDROID_API__=28"
             ],
             "windowsSdkVersion": "10.0.26100.0",
-            // "compilerPath": "cl.exe",
-            "compilerPath": "C:\\Users\\wjdrm\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\bin\\clang++.exe",
+            "compilerPath": "cl.exe",
+            // "compilerPath": "C:\\Users\\wjdrm\\AppData\\Local\\Android\\Sdk\\ndk\\27.0.12077973\\toolchains\\llvm\\prebuilt\\windows-x86_64\bin\\clang++.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            // "intelliSenseMode": "windows-msvc-x64"
-            "intelliSenseMode": "windows-clang-x64"
+            "intelliSenseMode": "windows-msvc-x64"
+            // "intelliSenseMode": "windows-clang-x64"
         }
     ],
     "version": 4

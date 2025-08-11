@@ -66,6 +66,10 @@ class CoursestepcardWidget extends StatelessWidget {
                       totalDays: totalDays,
                       currentDay: currentDay,
                       steps: steps,
+                      enableNavigation: true,
+                      onStepTap: (day) {
+                        onStartStudy(day);
+                      },
                     ),
                   ),
                 if (selectedCourse != null)

@@ -5,18 +5,18 @@ packages:
     dependency: transitive
     description:
       name: _fe_analyzer_shared
-      sha256: da0d9209ca76bde579f2da330aeb9df62b6319c834fa7baae052021b0462401f
+      sha256: a169e44fe3506e212963b56a0497aa4e711e68a269a4d645873c1849aabf1515
       url: "https://pub.dev"
     source: hosted
-    version: "85.0.0"
+    version: "87.0.0"
   analyzer:
     dependency: transitive
     description:
       name: analyzer
-      sha256: "974859dc0ff5f37bc4313244b3218c791810d03ab3470a579580279ba971a48d"
+      sha256: "731195f2f1837dc1bf0dcc60bbfca0d769181a7bcf4b98221738b2b61a3f058d"
       url: "https://pub.dev"
     source: hosted
-    version: "7.7.1"
+    version: "8.1.0"
   archive:
     dependency: transitive
     description:
@@ -165,10 +165,18 @@ packages:
     dependency: transitive
     description:
       name: dart_style
-      sha256: "8a0e5fba27e8ee025d2ffb4ee820b4e6e2cf5e4246a6b1a477eb66866947e0bb"
+      sha256: c87dfe3d56f183ffe9106a18aebc6db431fc7c98c31a54b952a77f3d54a85697
       url: "https://pub.dev"
     source: hosted
-    version: "3.1.1"
+    version: "3.1.2"
+  dartcv4:
+    dependency: transitive
+    description:
+      name: dartcv4
+      sha256: bafdc00c76b376a52924db27bc4c6f6c33600e1ec2f51f71d878343e592cdc78
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.6"
   fake_async:
     dependency: transitive
     description:
@@ -453,6 +461,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  opencv_dart:
+    dependency: "direct main"
+    description:
+      name: opencv_dart
+      sha256: fed512728e358915d6916333cbaf1c46536cb9caaf6daf86c75d080e14b0d03f
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.3"
   package_config:
     dependency: transitive
     description:

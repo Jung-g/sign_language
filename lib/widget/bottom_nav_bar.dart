@@ -171,7 +171,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ),
         SalomonBottomBarItem(
           icon: const Icon(Icons.g_translate),
-          title: const Text("번역"),
+          title: const Text("작문 연습"),
           selectedColor: Colors.purple,
         ),
         SalomonBottomBarItem(
