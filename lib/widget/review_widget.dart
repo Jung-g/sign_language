@@ -21,14 +21,27 @@ class ReviewCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
     );
 
+    // if (courseWordsMap.isEmpty) {
+    //   return Container(
+    //     padding: const EdgeInsets.all(16),
+    //     decoration: BoxDecoration(
+    //       color: Colors.orange.shade50,
+    //       borderRadius: BorderRadius.circular(20),
+    //     ),
+    //     child: const Center(child: Text('복습할 내용이 없습니다.')),
+    //   );
+    // }
+
     if (courseWordsMap.isEmpty) {
-      return Container(
+      return Neumorphism(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.orange.shade50,
-          borderRadius: BorderRadius.circular(20),
+        width: double.infinity,
+        child: const Center(
+          child: Text(
+            '복습할 내용이 없습니다.',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
         ),
-        child: const Center(child: Text('복습할 내용이 없습니다.')),
       );
     }
 

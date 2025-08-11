@@ -254,8 +254,6 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
                         '카메라를 실행하려면 아이콘을 누르세요',
                         style: TextStyle(fontSize: 12),
                       ),
-                    SizedBox(height: 10),
-                    Text('$item 수어 표현 방법 적어야함', style: TextStyle(fontSize: 20)),
                   ],
                 ),
               );

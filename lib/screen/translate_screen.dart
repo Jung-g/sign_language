@@ -74,8 +74,8 @@ class TranslateScreenState extends State<TranslateScreen> {
   }
 
   void onFrameAvailable(CameraImage image) async {
-    if (isProcessingFrame) return;
-    isProcessingFrame = true;
+    // if (isProcessingFrame) return;
+    // isProcessingFrame = true;
 
     try {
       final jpeg = await convertYUV420toJPEG(image);
@@ -86,13 +86,11 @@ class TranslateScreenState extends State<TranslateScreen> {
           await sendFrames(List.from(frameBuffer));
           frameBuffer.clear();
         }
-      } else {
-        print("JPEG 변환 실패: convertYUV420toJPEG에서 null 반환");
       }
     } catch (e) {
-      print("프레임 처리 오류 (YUV->JPEG): $e");
+      print("프레임 처리 오류: $e");
     } finally {
-      isProcessingFrame = false;
+      // isProcessingFrame = false;
     }
   }
 
@@ -128,7 +126,6 @@ class TranslateScreenState extends State<TranslateScreen> {
     cameraController = CameraController(
       frontCamera,
       ResolutionPreset.medium,
-      // ResolutionPreset.low,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.yuv420,
     );
@@ -224,7 +221,7 @@ class TranslateScreenState extends State<TranslateScreen> {
           (uHeightGuess - height ~/ 2).abs() <= 2) {
         format = 'YUV420';
       } else {
-        print("Unknown YUV format");
+        debugPrint("Unknown YUV format");
         return null;
       }
 
@@ -267,7 +264,9 @@ class TranslateScreenState extends State<TranslateScreen> {
       }
 
       // JPEG 인코딩
-      final encoded = img.encodeJpg(output, quality: 100);
+      final rotated = img.copyRotate(output, angle: 270);
+      final resized = img.copyResize(rotated, width: 720, height: 480);
+      final encoded = img.encodeJpg(resized, quality: 100);
       return Uint8List.fromList(encoded);
     } catch (e) {
       debugPrint("변환 오류: $e");
@@ -381,7 +380,7 @@ class TranslateScreenState extends State<TranslateScreen> {
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       // border: Border.all(color: Colors.black),
-                      color: Color.fromARGB(255, 244, 237, 255),
+                      color: Color.fromARGB(255, 238, 229, 255),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Stack(
@@ -451,7 +450,7 @@ class TranslateScreenState extends State<TranslateScreen> {
                     padding: EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       // border: Border.all(color: Colors.black),
-                      color: Color.fromARGB(255, 244, 237, 255),
+                      color: Color.fromARGB(255, 238, 229, 255),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.topLeft,
@@ -460,6 +459,25 @@ class TranslateScreenState extends State<TranslateScreen> {
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // if (isSignToKorean && resultKorean != null) ...[
+                              //   Text(
+                              //     '한글: $resultKorean',
+                              //     style: TextStyle(fontSize: 16),
+                              //   ),
+                              //   Text(
+                              //     '영어: $resultEnglish',
+                              //     style: TextStyle(fontSize: 16),
+                              //   ),
+                              //   Text(
+                              //     '일본어: $resultJapanese',
+                              //     style: TextStyle(fontSize: 16),
+                              //   ),
+                              //   Text(
+                              //     '중국어: $resultChinese',
+                              //     style: TextStyle(fontSize: 16),
+                              //   ),
+                              //   const SizedBox(height: 12),
+                              // ],
                               if (isSignToKorean && resultKorean != null) ...[
                                 if (selectedLang == '한국어')
                                   Text(

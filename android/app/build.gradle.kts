@@ -34,6 +34,20 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
+        // ndk {
+        //     abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        // }
+
+        // externalNativeBuild {
+        //     cmake {
+        //         cppFlags += listOf("-std=c++17", "-fexceptions", "-frtti", "-O2")
+        //         arguments += listOf(
+        //             "-DANDROID_PLATFORM=android-28",
+        //             "-DANDROID_STL=c++_shared"
+        //         )
+        //     }
+        // }
     }
 
     buildTypes {
@@ -43,6 +57,18 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    // externalNativeBuild {
+    //     cmake {
+    //         path "src/main/cpp/CMakeLists.txt"
+    //     }
+    // }
+
+    // sourceSets {
+    //     main {
+    //         jniLibs.srcDirs = ['src/main/jniLibs']
+    //     }
+    // }
 }
 
 flutter {

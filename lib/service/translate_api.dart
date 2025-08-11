@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:sign_language/service/token_storage.dart';
 
-const String baseUrl = 'http://10.101.170.23';
+const String baseUrl = 'http://10.101.170.52';
 
 class TranslateApi {
   // 수어 -> 단어
   static Future<Map<String, dynamic>> signToText(
     String videoPath,
-    String expectedWord,
+    String? expectedWord,
   ) async {
     try {
       final accessToken = await TokenStorage.getAccessToken();
@@ -17,13 +17,19 @@ class TranslateApi {
 
       final uri = Uri.parse('$baseUrl/translate/sign_to_text');
 
-      final request = http.MultipartRequest('POST', uri)
-        ..fields['expected_word'] = expectedWord
-        ..files.add(await http.MultipartFile.fromPath('file', videoPath))
-        ..headers.addAll({
-          'Authorization': 'Bearer $accessToken',
-          'X-Refresh-Token': refreshToken ?? '',
-        });
+      final request = http.MultipartRequest('POST', uri);
+
+      // expectedWord가 null이 아닐 경우에만 fields에 추가
+      if (expectedWord != null) {
+        request.fields['expected_word'] = expectedWord;
+      }
+
+      request.files.add(await http.MultipartFile.fromPath('file', videoPath));
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $accessToken',
+        'X-Refresh-Token': refreshToken ?? '',
+      });
 
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
