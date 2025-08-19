@@ -108,7 +108,6 @@ class UserScreenState extends State<UserScreen> {
                 );
               },
             ),
-            // BottomNavBar(),
           ],
         ),
       ),

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sign_language/service/study_api.dart'; // StudyApi 가져오기
+import 'package:sign_language/service/study_api.dart';
 
 class CourseModel with ChangeNotifier {
   String? _selectedCourse;
@@ -145,7 +145,9 @@ class CourseModel with ChangeNotifier {
         if (wordStep != null && stepNumber != null && wordStep == stepNumber) {
           word['sid'] ??= sid;
           word['course'] ??= _selectedCourse;
-          print("SID 할당: ${word['word']} → $sid, course: ${word['course']}");
+          debugPrint(
+            "SID 할당: ${word['word']} → $sid, course: ${word['course']}",
+          );
         }
       }
     }
@@ -175,24 +177,26 @@ class CourseModel with ChangeNotifier {
       _reviewableStep5Words = data;
       notifyListeners();
     } catch (e) {
-      print('복습 단어 로딩 실패: $e');
+      debugPrint('복습 단어 로딩 실패: $e');
     }
   }
 
   void debugWords() {
-    print('단어 목록: ');
+    debugPrint('단어 목록: ');
     for (final w in _words) {
-      print(
+      debugPrint(
         '→ sid: ${w['sid']}, step: ${w['step']}, word: ${w['word']}, course: ${w['course']}}',
       );
     }
 
-    print('스텝 목록: ');
+    debugPrint('스텝 목록: ');
     for (final s in _steps) {
-      print('→ step: ${s['step']}, sid: ${s['sid']}, name: ${s['step_name']}');
+      debugPrint(
+        '→ step: ${s['step']}, sid: ${s['sid']}, name: ${s['step_name']}',
+      );
     }
 
-    print('sid: $_sid');
+    debugPrint('sid: $_sid');
   }
 
   Future<void> clearSelectedCourse() async {

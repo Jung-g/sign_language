@@ -72,7 +72,7 @@ class PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                         }
 
                         setState(() {
-                          found = exists; // true면 비번 입력 칸 나옴
+                          found = exists; // true면 비밀번호 입력 칸 나옴
                         });
                       },
                     ),

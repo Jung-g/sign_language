@@ -35,11 +35,9 @@ dependencies:
     sdk: flutter
 
   opencv_dart: ^1.4.3
-
+  flutter_launcher_icons: ^0.14.4
   ffi: ^2.1.4
   ffigen: ^19.1.0
-  
-  # flutter_localization: ^0.3.3
   table_calendar: ^3.2.0  
   flutter_screenutil: ^5.9.3
   responsive_builder: ^0.7.1
@@ -57,11 +55,15 @@ dependencies:
   provider: ^6.1.5
   image: ^4.5.4
   salomon_bottom_bar: ^3.3.2
-  # ffmpeg_kit_flutter_new: ^3.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+
+flutter_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/app_icon.png"
 
 dev_dependencies:
   flutter_test:

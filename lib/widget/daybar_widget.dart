@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class DaybarWidget extends StatelessWidget {
   final int totalDays;
-  final int currentDay; // 1부터 시작
+  final int currentDay;
   final List<Map<String, dynamic>> steps;
   final bool enableNavigation;
   final ValueChanged<int>? onStepTap;
@@ -80,16 +80,6 @@ class DaybarWidget extends StatelessWidget {
             child: Column(
               children: [
                 tappable,
-                // Container(
-                //   width: 36,
-                //   height: 36,
-                //   decoration: BoxDecoration(
-                //     color: bgColor,
-                //     shape: BoxShape.circle,
-                //   ),
-                //   alignment: Alignment.center,
-                //   child: inner,
-                // ),
                 const SizedBox(height: 4),
                 Text(
                   stepName,

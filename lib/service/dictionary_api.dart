@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'token_storage.dart';
 
-const String baseUrl = 'http://10.101.170.52';
+const String baseUrl = 'http://192.168.0.76';
 
 class WordData {
   final List<String> words;

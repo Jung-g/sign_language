@@ -33,6 +33,7 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
   bool isLoading = false;
   List<Uint8List>? base64Frames;
   final GlobalKey<AnimationWidgetState> animationKey = GlobalKey();
+  final GlobalKey<CameraWidgetState> cameraKey = GlobalKey<CameraWidgetState>();
 
   @override
   void initState() {
@@ -60,15 +61,15 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
   Future<void> onNext() async {
     if (pageIndex < widget.items.length - 1) {
       pageCtrl.nextPage(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
       try {
         await StudyApi.completeStudy(sid: widget.sid, step: widget.step);
-        print("학습 완료 저장 성공");
+        debugPrint("학습 완료 저장 성공");
       } catch (e) {
-        print("학습 완료 저장 실패: $e");
+        debugPrint("학습 완료 저장 실패: $e");
       }
 
       final screenState = context.findAncestorStateOfType<StudyScreenState>();
@@ -82,6 +83,9 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
 
   @override
   void dispose() {
+    if (showCamera) {
+      cameraKey.currentState?.stop();
+    }
     pageCtrl.dispose();
     super.dispose();
   }
@@ -103,13 +107,16 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
 
     return Column(
       children: [
-        // PageView: 각 아이템 수어 애니메이션 보여주기
         Expanded(
           child: PageView.builder(
-            key: PageStorageKey('study_pageview'), // 현재 페이지 고정용 키
+            key: const PageStorageKey('study_pageview'),
             controller: pageCtrl,
             itemCount: widget.items.length,
-            onPageChanged: (idx) {
+            onPageChanged: (idx) async {
+              if (showCamera) {
+                await cameraKey.currentState?.stop();
+                if (mounted) setState(() => showCamera = false);
+              }
               setState(() => pageIndex = idx);
               loadAnimationFrames(widget.items[idx]);
             },
@@ -118,13 +125,13 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
               final size = MediaQuery.of(context).size.width * 0.7;
 
               return SingleChildScrollView(
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       item,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
                       ),
@@ -148,109 +155,159 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
                                         onPressed: () {
                                           animationKey.currentState?.reset();
                                         },
-                                        icon: Icon(Icons.replay),
-                                        label: Text("다시보기"),
+                                        icon: const Icon(Icons.replay),
+                                        label: const Text("다시보기"),
                                       ),
                                     ],
                                   )
                                 : const Center(child: Text("영상 없음"))),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     IconButton(
-                      icon: Icon(Icons.videocam, size: 36),
-                      onPressed: () => setState(() => showCamera = true),
+                      icon: Icon(
+                        showCamera ? Icons.videocam_off : Icons.videocam,
+                        size: 36,
+                      ),
+                      onPressed: () async {
+                        if (!showCamera) {
+                          setState(() => showCamera = true);
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            cameraKey.currentState?.start();
+                          });
+                        } else {
+                          await cameraKey.currentState?.stop();
+                          if (mounted) setState(() => showCamera = false);
+                        }
+                      },
                     ),
                     if (showCamera)
                       SizedBox(
                         width: size,
                         height: size,
-                        child: CameraWidget(
-                          onFinish: (file) async {
-                            setState(() {
-                              isAnalyzing = true;
-                            });
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: CameraWidget(
+                                key: cameraKey,
+                                batchSize: 45,
+                                maxBuffer: 120,
+                                useNV12: false,
+                                rotate90CCW: true,
+                                targetSize: const Size(720, 480),
+                                preferFrontCamera: true,
+                                visible: true,
+                                paused: false,
+                                onSend: (frames) async {
+                                  return await TranslateApi.sendFrames(frames);
+                                },
+                                onServerResponse: (_) {}, // 중간 응답 무시
+                                onCameraState: (on) async {
+                                  setState(() => showCamera = on);
 
-                            final expected = widget.items[pageIndex];
-                            final result = await TranslateApi.signToText(
-                              file.path,
-                              expected,
-                            );
-                            final isCorrect = result['match'] == true;
+                                  if (!on) {
+                                    setState(() => isAnalyzing = true);
 
-                            setState(() {
-                              isAnalyzing = false;
-                              showCamera = false;
-                            });
+                                    final expected = widget.items[pageIndex];
+                                    final result =
+                                        await TranslateApi.translateLatest2();
+                                    final recognized =
+                                        result?['korean']?.toString().trim() ??
+                                        '';
 
-                            if (!mounted) return;
+                                    // 빈 값/안내문구는 무조건 오답
+                                    final isCorrect =
+                                        recognized.isNotEmpty &&
+                                        recognized != "인식된 단어가 없습니다." &&
+                                        recognized == expected;
 
-                            if (!isCorrect) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (pageCtrl.hasClients &&
-                                    pageCtrl.page?.round() != pageIndex) {
-                                  pageCtrl.jumpToPage(pageIndex);
-                                }
-                              }); // 오답 시 현재 페이지 유지
-                            }
+                                    setState(() => isAnalyzing = false);
 
-                            await showDialog(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: isCorrect
-                                    ? const Text(
-                                        '정답입니다!',
-                                        style: TextStyle(color: Colors.green),
-                                      )
-                                    : const Text(
-                                        '오답입니다',
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      isCorrect ? 'O' : 'X',
-                                      style: TextStyle(
-                                        fontSize: 80,
-                                        fontWeight: FontWeight.bold,
-                                        color: isCorrect
-                                            ? Colors.green
-                                            : Colors.red,
-                                      ),
-                                    ),
-                                    isCorrect
-                                        ? const SizedBox.shrink()
-                                        : const Padding(
-                                            padding: EdgeInsets.only(top: 10),
-                                            child: Text(
-                                              '다시 시도해주세요',
-                                              style: TextStyle(fontSize: 16),
-                                            ),
+                                    if (!mounted) return;
+                                    await showDialog(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: Text(
+                                          isCorrect ? '정답입니다!' : '오답입니다',
+                                          style: TextStyle(
+                                            color: isCorrect
+                                                ? Colors.green
+                                                : Colors.red,
                                           ),
-                                  ],
+                                        ),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              isCorrect ? 'O' : 'X',
+                                              style: TextStyle(
+                                                fontSize: 80,
+                                                fontWeight: FontWeight.bold,
+                                                color: isCorrect
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                              ),
+                                            ),
+                                            if (!isCorrect)
+                                              const Padding(
+                                                padding: EdgeInsets.only(
+                                                  top: 10,
+                                                ),
+                                                child: Text(
+                                                  '다시 시도해주세요',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+
+                                    // 정답일 때만 다음으로 이동
+                                    if (isCorrect) {
+                                      await Future.delayed(
+                                        const Duration(milliseconds: 500),
+                                      );
+                                      if (pageIndex < widget.items.length - 1) {
+                                        pageCtrl.nextPage(
+                                          duration: const Duration(
+                                            milliseconds: 300,
+                                          ),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      } else {
+                                        await onNext();
+                                      }
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () async {
+                                    await cameraKey.currentState?.stop();
+                                    if (mounted) {
+                                      setState(() => showCamera = false);
+                                    }
+                                  },
                                 ),
                               ),
-                            );
-
-                            // 정답이면 다음 페이지로 자동 이동 또는 학습 완료
-                            if (isCorrect) {
-                              await Future.delayed(
-                                const Duration(milliseconds: 500),
-                              );
-                              if (pageIndex < widget.items.length - 1) {
-                                pageCtrl.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              } else {
-                                await onNext();
-                              }
-                            }
-                          },
+                            ),
+                          ],
                         ),
                       )
                     else
-                      Text(
+                      const Text(
                         '카메라를 실행하려면 아이콘을 누르세요',
                         style: TextStyle(fontSize: 12),
                       ),
@@ -260,26 +317,23 @@ class GenericStudyWidgetState extends State<GenericStudyWidget> {
             },
           ),
         ),
-        // 다음 단계 버튼
         Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: ElevatedButton(
             onPressed: onNext,
             child: Text(pageIndex < widget.items.length - 1 ? '다음' : '학습 완료'),
           ),
         ),
-
-        // 복습
-        if (widget.onReview != null) SizedBox(width: 12),
+        if (widget.onReview != null) const SizedBox(width: 12),
         if (widget.onReview != null)
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: widget.onReview,
-                    child: Text("복습하기"),
+                    child: const Text("복습하기"),
                   ),
                 ),
               ],

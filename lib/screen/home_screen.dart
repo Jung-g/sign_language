@@ -213,7 +213,6 @@ class HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 10),
               ],
             ),
-      // bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

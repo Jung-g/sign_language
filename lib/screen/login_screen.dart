@@ -36,7 +36,7 @@ class LoginScreenState extends State<LoginScreen> {
             child: Column(
               children: [
                 Text(
-                  '바루',
+                  '수어술술',
                   style: TextStyle(
                     fontSize: 40,
                     fontWeight: FontWeight.w600,

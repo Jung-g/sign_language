@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:sign_language/service/token_storage.dart';
 
-const String baseUrl = 'http://10.101.170.52';
+const String baseUrl = 'http://192.168.0.76';
 
 class DeleteUserApi {
   static Future<bool> deleteUser({

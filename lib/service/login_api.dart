@@ -1,7 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-const String baseUrl = 'http://10.101.170.52';
+const String baseUrl = 'http://192.168.0.76';
 
 class LoginResult {
   final bool success;

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class TokenStorage {
@@ -21,7 +22,7 @@ class TokenStorage {
     try {
       return await _storage.read(key: 'access_token');
     } catch (e) {
-      print('[ERROR] access_token 읽기 실패: $e');
+      debugPrint('[ERROR] access_token 읽기 실패: $e');
       return null;
     }
   }
@@ -30,7 +31,7 @@ class TokenStorage {
     try {
       return await _storage.read(key: 'refresh_token');
     } catch (e) {
-      print('[ERROR] refresh_token 읽기 실패: $e');
+      debugPrint('[ERROR] refresh_token 읽기 실패: $e');
       return null;
     }
   }
@@ -39,7 +40,7 @@ class TokenStorage {
     try {
       return await _storage.read(key: 'expires_at');
     } catch (e) {
-      print('[ERROR] expires_at 읽기 실패: $e');
+      debugPrint('[ERROR] expires_at 읽기 실패: $e');
       return null;
     }
   }
@@ -48,7 +49,7 @@ class TokenStorage {
     try {
       return await _storage.read(key: 'user_id');
     } catch (e) {
-      print('[ERROR] user_id 읽기 실패: $e');
+      debugPrint('[ERROR] user_id 읽기 실패: $e');
       return null;
     }
   }
@@ -57,7 +58,7 @@ class TokenStorage {
     try {
       return await _storage.read(key: 'nickname');
     } catch (e) {
-      print('[ERROR] nickname 읽기 실패: $e');
+      debugPrint('[ERROR] nickname 읽기 실패: $e');
       return null;
     }
   }

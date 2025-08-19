@@ -31,13 +31,6 @@ class CoursestepcardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      // child: Container(
-      //   height: boxHeight,
-      //   width: double.infinity,
-      //   decoration: BoxDecoration(
-      //     color: Colors.pink[50],
-      //     borderRadius: BorderRadius.circular(20),
-      //   ),
       child: Neumorphism(
         height: boxHeight,
         width: double.infinity,

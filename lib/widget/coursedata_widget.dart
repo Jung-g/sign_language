@@ -14,7 +14,7 @@ class CourcedataWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // 1) PageView 로 항목별 영상/이미지
+        // PageView 로 항목별 영상/이미지
         Expanded(
           child: PageView.builder(
             itemCount: items.length,
@@ -38,7 +38,7 @@ class CourcedataWidget extends StatelessWidget {
           ),
         ),
 
-        // 2) 퀴즈 버튼 (간단 예시)
+        // 퀴즈 버튼 (간단 예시)
         Padding(
           padding: const EdgeInsets.all(16),
           child: ElevatedButton(

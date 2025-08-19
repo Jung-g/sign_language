@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sign_language/model/course_model.dart';
-// import 'package:sign_language/screen/home_screen.dart';
 import 'package:sign_language/screen/login_screen.dart';
 import 'package:sign_language/screen/main_screen.dart';
 import 'package:sign_language/service/auto_login_api.dart';
@@ -18,7 +17,7 @@ void main() async {
     final result = await AutoLoginApi.autoLogin(refreshToken);
     isLoggedIn = result == true;
   } else {
-    print('[INFO] refresh token 없음 또는 복호화 실패 → 자동 로그인 실패 → 토큰 초기화');
+    debugPrint('[INFO] refresh token 없음 또는 복호화 실패 → 자동 로그인 실패 → 토큰 초기화');
     await TokenStorage.clearTokens();
   }
 

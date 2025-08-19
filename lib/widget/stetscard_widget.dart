@@ -17,12 +17,6 @@ class StetscardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final percent = overallPercent;
 
-    // return Container(
-    //   padding: const EdgeInsets.all(16),
-    //   decoration: BoxDecoration(
-    //     color: Colors.purple.shade50,
-    //     borderRadius: BorderRadius.circular(20),
-    //   ),
     return Neumorphism(
       padding: const EdgeInsets.all(16),
       width: double.infinity,

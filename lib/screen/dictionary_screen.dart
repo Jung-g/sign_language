@@ -370,7 +370,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
           ),
         ),
       ),
-      // bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sign_language"
+    namespace = "com.bit41.sign_language"
     compileSdk = flutter.compileSdkVersion
     // ndkVersion = flutter.ndkVersion
     ndkVersion = "27.0.12077973"
@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.sign_language"
+        applicationId = "com.bit41.sign_language"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // minSdk = flutter.minSdkVersion
@@ -34,20 +34,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
-        // ndk {
-        //     abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-        // }
-
-        // externalNativeBuild {
-        //     cmake {
-        //         cppFlags += listOf("-std=c++17", "-fexceptions", "-frtti", "-O2")
-        //         arguments += listOf(
-        //             "-DANDROID_PLATFORM=android-28",
-        //             "-DANDROID_STL=c++_shared"
-        //         )
-        //     }
-        // }
     }
 
     buildTypes {
@@ -57,18 +43,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-
-    // externalNativeBuild {
-    //     cmake {
-    //         path "src/main/cpp/CMakeLists.txt"
-    //     }
-    // }
-
-    // sourceSets {
-    //     main {
-    //         jniLibs.srcDirs = ['src/main/jniLibs']
-    //     }
-    // }
 }
 
 flutter {

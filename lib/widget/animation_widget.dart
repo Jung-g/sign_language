@@ -16,7 +16,7 @@ class AnimationWidgetState extends State<AnimationWidget> {
   late int frameIndex;
   Timer? timer;
 
-  /// 외부에서 다시 재생할 수 있도록 공개된 reset 메서드
+  // 외부에서 다시 재생할 수 있도록 reset 설정
   void reset() {
     timer?.cancel();
     setState(() => frameIndex = 0);

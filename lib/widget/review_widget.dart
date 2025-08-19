@@ -12,6 +12,7 @@ class ReviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final courseModel = context.watch<CourseModel>();
     final courseWordsMap = courseModel.reviewableStep5Words;
+    final previewEntries = courseWordsMap.entries.take(5).toList();
 
     final ButtonStyle buttonStyle = ElevatedButton.styleFrom(
       backgroundColor: Colors.white,
@@ -20,17 +21,6 @@ class ReviewCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
     );
-
-    // if (courseWordsMap.isEmpty) {
-    //   return Container(
-    //     padding: const EdgeInsets.all(16),
-    //     decoration: BoxDecoration(
-    //       color: Colors.orange.shade50,
-    //       borderRadius: BorderRadius.circular(20),
-    //     ),
-    //     child: const Center(child: Text('복습할 내용이 없습니다.')),
-    //   );
-    // }
 
     if (courseWordsMap.isEmpty) {
       return Neumorphism(
@@ -45,15 +35,6 @@ class ReviewCard extends StatelessWidget {
       );
     }
 
-    final previewEntries = courseWordsMap.entries.take(5).toList();
-
-    // return Container(
-    //   width: double.infinity,
-    //   padding: const EdgeInsets.all(16),
-    //   decoration: BoxDecoration(
-    //     color: Colors.orange.shade50,
-    //     borderRadius: BorderRadius.circular(20),
-    //   ),
     return Neumorphism(
       padding: const EdgeInsets.all(16),
       width: double.infinity,

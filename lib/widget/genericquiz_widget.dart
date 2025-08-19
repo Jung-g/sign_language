@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:sign_language/model/course_model.dart';
 import 'package:sign_language/service/animation_api.dart';
 import 'package:sign_language/service/study_api.dart';
+import 'package:sign_language/service/translate_api.dart';
 import 'package:sign_language/widget/animation_widget.dart';
+import 'package:sign_language/widget/camera_widget.dart';
 
 class GenericQuizWidget extends StatefulWidget {
   final List<Map<String, dynamic>> words;
@@ -34,11 +36,18 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
   int correctCount = 0;
   bool answered = false;
   bool? answereIcon;
+
   late String correct;
   List<String> options = [];
   List<Uint8List>? base64Frames;
   bool isLoading = false;
+
   final GlobalKey<AnimationWidgetState> animationKey = GlobalKey();
+
+  // 카메라 제어
+  bool showCamera = false;
+  bool isAnalyzing = false;
+  final GlobalKey<CameraWidgetState> cameraKey = GlobalKey<CameraWidgetState>();
 
   @override
   void initState() {
@@ -85,7 +94,7 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
     setState(() {
       answered = true;
       answereIcon = isCorrect;
-      if (selected == correct) correctCount++;
+      if (isCorrect) correctCount++;
     });
 
     Future.delayed(const Duration(seconds: 1), () {
@@ -97,12 +106,17 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
   }
 
   void onNext() async {
+    if (showCamera) {
+      await cameraKey.currentState?.stop();
+      if (mounted) setState(() => showCamera = false);
+    }
+
     if (index < quizList.length - 1) {
       setState(() {
         index++;
         answered = false;
-        setup();
       });
+      setup();
     } else {
       final accuracy = correctCount / quizList.length;
       final percent = (accuracy * 100).toStringAsFixed(1);
@@ -138,12 +152,15 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
         );
       }
 
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
     }
   }
 
   @override
   void dispose() {
+    if (showCamera) {
+      cameraKey.currentState?.stop();
+    }
     super.dispose();
   }
 
@@ -157,7 +174,12 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
               title: const Text('복습 퀴즈'),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () async {
+                  if (showCamera) {
+                    await cameraKey.currentState?.stop();
+                  }
+                  if (mounted) Navigator.pop(context);
+                },
               ),
             )
           : null,
@@ -168,16 +190,7 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const SizedBox(height: 30),
-                Text(
-                  // 디버그용 나중에 삭제할 것 + 바로 아래 SizedBox는 height: 100으로 수정
-                  correct,
-                  style: const TextStyle(
-                    fontSize: 60,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 100),
                 Container(
                   width: size,
                   height: size,
@@ -197,19 +210,143 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
                                     onPressed: () {
                                       animationKey.currentState?.reset();
                                     },
-                                    icon: Icon(Icons.replay),
-                                    label: Text("다시보기"),
+                                    icon: const Icon(Icons.replay),
+                                    label: const Text("다시보기"),
                                   ),
                                 ],
                               )
                             : const Center(child: Text("영상 없음"))),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 8),
+
+                // 카메라 토글 아이콘
+                IconButton(
+                  icon: Icon(
+                    showCamera ? Icons.videocam_off : Icons.videocam,
+                    size: 36,
+                  ),
+                  onPressed: () async {
+                    if (!showCamera) {
+                      setState(() => showCamera = true);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        cameraKey.currentState?.start();
+                      });
+                    } else {
+                      await cameraKey.currentState?.stop();
+                      if (mounted) setState(() => showCamera = false);
+                    }
+                  },
+                ),
+
+                // 카메라 영역
+                if (showCamera)
+                  SizedBox(
+                    width: size,
+                    height: size,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: CameraWidget(
+                            key: cameraKey,
+                            batchSize: 45,
+                            maxBuffer: 120,
+                            useNV12: false,
+                            rotate90CCW: true,
+                            targetSize: const Size(720, 480),
+                            preferFrontCamera: true,
+                            visible: true,
+                            paused: false,
+                            onSend: (frames) async {
+                              // 서버 전송
+                              final res = await TranslateApi.sendFrames(frames);
+                              return res;
+                            },
+                            onServerResponse: (res) async {
+                              final isCorrect =
+                                  res['match'] == true ||
+                                  (res['korean']?.toString().trim() == correct);
+
+                              if (!mounted) return;
+                              await showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: Text(
+                                    isCorrect ? '정답입니다!' : '오답입니다',
+                                    style: TextStyle(
+                                      color: isCorrect
+                                          ? Colors.green
+                                          : Colors.red,
+                                    ),
+                                  ),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        isCorrect ? 'O' : 'X',
+                                        style: TextStyle(
+                                          fontSize: 80,
+                                          fontWeight: FontWeight.bold,
+                                          color: isCorrect
+                                              ? Colors.green
+                                              : Colors.red,
+                                        ),
+                                      ),
+                                      if (!isCorrect)
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 10),
+                                          child: Text(
+                                            '다시 시도해보세요.',
+                                            style: TextStyle(fontSize: 16),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                            onCameraState: (on) {
+                              setState(() => showCamera = on);
+                            },
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                              ),
+                              onPressed: () async {
+                                await cameraKey.currentState?.stop();
+                                if (mounted) {
+                                  setState(() => showCamera = false);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        if (isAnalyzing)
+                          const Positioned.fill(
+                            child: ColoredBox(
+                              color: Color.fromARGB(128, 0, 0, 0),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 32),
                 Text(
                   '정답 $correctCount / ${quizList.length}',
                   style: const TextStyle(fontSize: 18),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 32),
+
+                // 보기 버튼들
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: GridView.count(
@@ -220,7 +357,6 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
                     childAspectRatio: 2.8,
                     children: List.generate(options.length, (i) {
                       final opt = options[i];
-
                       return ElevatedButton(
                         onPressed: answered
                             ? null
@@ -239,6 +375,8 @@ class _GenericQuizWidgetState extends State<GenericQuizWidget> {
                 ),
               ],
             ),
+
+            // 정답/오답 오버레이
             if (answereIcon != null)
               Container(
                 alignment: Alignment.center,

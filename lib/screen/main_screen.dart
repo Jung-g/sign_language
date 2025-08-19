@@ -45,7 +45,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
           SalomonBottomBarItem(
             icon: Icon(Icons.g_translate),
-            title: Text("번역"),
+            title: Text("장문 연습"),
             selectedColor: Colors.purple,
           ),
           SalomonBottomBarItem(
